@@ -3,9 +3,10 @@
 사용되는 봇입니다.
 
 <h2>Tutorial Bot을 만든 이유</h2>
-기존에 사용했던 소스는 BWAPI 4.1.2 버전을 사용하는 JMirror를 사용하였으며,
-NullPointerException예외가 발생할 경우, JVM Crash가 발생하는 경우가 종종 나왔으며,
-BWAPI 4.1.2 버전에 국한되는 것이 아닌 최신 버전 역시 사용하고자 JBWAPI를 사용하여 
+
+기존에 사용했던 소스는 BWAPI 4.1.2 버전을 사용하는 JMirror를 사용하였으며,  
+NullPointerException예외가 발생할 경우, JVM Crash가 발생하는 경우가 종종 나왔으며,  
+BWAPI 4.1.2 버전에 국한되는 것이 아닌 최신 버전 역시 사용하고자 JBWAPI를 사용하여   
 더 쉽고 간단하게 개발하게 되었습니다.
 
 <h2>무엇이 바뀌었을 까</h2>
