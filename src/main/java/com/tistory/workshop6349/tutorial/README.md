@@ -26,17 +26,18 @@ BWAPI 4.1.2 버전에 국한되는 것이 아닌 최신 버전 역시 사용하�
 * 디버그 표시
 
 <h2>사용 방법</h2>
-BWAPI 4.4.0 설치
-StarCraft 1.16.1 설치
-IntelliJ 혹은 Eclipse 설치
-JDK 1.8 설치
-JBWAPI MAVEN 혹은 Gradle 로 설치
-해당 Tutorial 소스 다운로드
-File -> Open -> Tutorial 소스 파일 열기
 
-BWAPI ChaosLauncher (MultiInstance.exe)을 관리자로 실행
-Tutorial 소스 파일에 있는 Main 클래스 Run  
-플레이는 반드시 1 대 1로 플레이, Tutorial Bot은 테란만 가능합니다.
+BWAPI 4.4.0 설치  
+StarCraft 1.16.1 설치  
+IntelliJ 혹은 Eclipse 설치  
+JDK 1.8 설치  
+JBWAPI MAVEN 혹은 Gradle 로 설치  
+해당 Tutorial 소스 다운로드  
+File -> Open -> Tutorial 소스 파일 열기  
+
+BWAPI ChaosLauncher (MultiInstance.exe)을 관리자로 실행  
+Tutorial 소스 파일에 있는 Main 클래스 Run    
+플레이는 반드시 1 대 1로 플레이, Tutorial Bot은 테란만 가능합니다.  
 
 <h2>License</h2>
 <a href=https://github.com/davechurchill/STARTcraft>
