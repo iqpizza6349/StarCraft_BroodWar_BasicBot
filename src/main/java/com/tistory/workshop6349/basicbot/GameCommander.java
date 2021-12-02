@@ -4,7 +4,7 @@ import bwapi.TilePosition;
 
 public class GameCommander {
 
-    boolean isToFindError = false;  // 디버깅용
+    boolean isToFindError;  // 디버깅용
     private static final GameCommander gameCommander = new GameCommander();
     public static GameCommander getInstance() {
         return gameCommander;
@@ -24,6 +24,11 @@ public class GameCommander {
 
         // TODO StrategyManager.getInstance().onStart();
     }
+
+    public void onEnd(boolean isWinner) {
+
+    }
+
 
 
 
