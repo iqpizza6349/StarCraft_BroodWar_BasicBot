@@ -44,8 +44,8 @@ public class BasicBotModule {
                 System.out.println("The match up is " + BroodWar.self().getRace() + " VS " +  BroodWar.enemy().getRace());
             }
             System.out.println("Map initialization...");
-
-            // Map init
+            Map.initialize();
+            Map.getMap().enableAutomaticPathAnalysis();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -54,7 +54,7 @@ public class BasicBotModule {
         BroodWar.setLocalSpeed(Config.setLocalSpeed);
         BroodWar.setFrameSkip(Config.setFrameSkip);
 
-        // TODO gameCommander.onStart();
+        gameCommander.onStart();
     }
 
 
