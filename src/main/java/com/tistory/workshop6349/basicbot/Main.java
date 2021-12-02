@@ -13,14 +13,15 @@ public class Main implements BWEventListener {
     public static void main(String[] args) {
         Main main = new Main();
         main.client = new BWClient(main);
-        game = main.client.getGame();
-        bwem = new BWEM(game);
-        botModule = new BasicBotModule(game, bwem);
         main.client.startGame();
     }
 
     @Override
     public void onStart() {
+        game = client.getGame();
+        bwem = new BWEM(game);
+        botModule = new BasicBotModule(game, bwem);
+
         botModule.onStart();
     }
 
@@ -106,6 +107,6 @@ public class Main implements BWEventListener {
 
     @Override
     public void onPlayerDropped(Player player) {
-        botModule.onPlayerDropped(player);
+
     }
 }
