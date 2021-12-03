@@ -1,193 +1,323 @@
 package com.tistory.workshop6349.basicbot;
 
+import bwapi.Pair;
+import bwapi.Position;
 import bwapi.Unit;
 import bwapi.UnitType;
+import bwem.util.Utils;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 
 public class UnitData {
 
-    /// Unit 과 UnitInfo 를 Map 형태로 저장하는 자료구조
-    Map<Integer, UnitInfo> unitAndUnitInfoMap = new HashMap<>();
+    private HashMap<UnitType, ArrayList<UnitInfo>> unitTypeMap = new HashMap<>();
+    private HashMap<UnitType, ArrayList<UnitInfo>> buildingTypeMap = new HashMap<>();
 
-    /// UnitType 별 파괴/사망한 유닛 숫자 누적값
-    Map<String, Integer> numDeadUnits = new HashMap<>();
+    private HashMap<Unit, UnitInfo> allUnits = new HashMap<>();
+    private HashMap<Unit, UnitInfo> allBuildings = new HashMap<>();
+    private HashMap<Integer, Pair<Integer, Position>> allSpells = new HashMap<>();
 
-    /// UnitType 별 건설/훈련했던 유닛 숫자 누적값
-    Map<String, Integer> numCreatedUnits = new HashMap<>();
+    private HashMap<UnitType, Integer> completedCount = new HashMap<>();
+    private HashMap<UnitType, Integer> destroyedCount = new HashMap<>();
+    private HashMap<UnitType, Integer> allCount = new HashMap<>();
 
-    /// UnitType 별 존재하는 유닛 숫자 카운트. 적군 유닛의 경우 식별된 유닛 숫자 카운트
-    Map<String, Integer> numUnits = new HashMap<>();
+    public UnitData() {}
 
-    /// 사망한 유닛을 생산하는데 소요되었던 Mineral 의 누적값 (얼마나 손해를 보았는가 계산하기 위함임)
-    private int mineralsLost = 0;
-    /// 사망한 유닛을 생산하는데 소요되었던 Gas 의 누적값 (얼마나 손해를 보았는가 계산하기 위함임)
-    private int gasLost = 0;
-
-    /// unitAndUnitInfoMap 에서 제거해야할 데이터들
-    Vector<Integer> badUnitsToRemove = new Vector<>();
-
-    public UnitData() {
+    public ArrayList<UnitInfo> getUnitList(UnitType type) {
+        unitTypeMap.computeIfAbsent(type, type1 -> new ArrayList<>());
+        return unitTypeMap.get(type);
     }
 
-    /// 유닛의 상태정보를 업데이트합니다
-    public void updateUnitInfo(Unit unit) {
-        if (unit == null) {
-            return;
-        }
-
-        boolean firstSeen = false;
-        if (!unitAndUnitInfoMap.containsKey(unit.getID())) {
-            firstSeen = true;
-            unitAndUnitInfoMap.put(unit.getID(), new UnitInfo());
-        }
-
-        UnitInfo ui = unitAndUnitInfoMap.get(unit.getID());
-        ui.setUnit(unit);
-        ui.setPlayer(unit.getPlayer());
-        ui.setLastPosition(unit.getPosition());
-        ui.setLastHealth(unit.getHitPoints());
-        ui.setLastShields(unit.getShields());
-        ui.setUnitID(unit.getID());
-        ui.setType(unit.getType());
-        ui.setCompleted(unit.isCompleted());
-
-        if (firstSeen) {
-            if (!numCreatedUnits.containsKey(unit.getType().toString())) {
-                numCreatedUnits.put(unit.getType().toString(), 1);
-            } else {
-                numCreatedUnits.put(unit.getType().toString(), numCreatedUnits.get(unit.getType().toString()) + 1);
-            }
-            if (!numUnits.containsKey(unit.getType().toString())) {
-                numUnits.put(unit.getType().toString(), 1);
-            } else {
-                numUnits.put(unit.getType().toString(), numUnits.get(unit.getType().toString()) + 1);
-            }
-        }
+    public ArrayList<UnitInfo> getBuildingList(UnitType type) {
+        buildingTypeMap.computeIfAbsent(type, type1 -> new ArrayList<>());
+        return buildingTypeMap.get(type);
     }
 
-    /// 파괴/사망한 유닛을 자료구조에서 제거합니다
-    public void removeUnit(Unit unit) {
-        if (unit == null) {
-            return;
-        }
-
-        if (numUnits.get(unit.getType().toString()) == null) {
-            numUnits.put(unit.getType().toString(), 0);
-            return;
-        }
-
-        mineralsLost += unit.getType().mineralPrice();
-        gasLost += unit.getType().gasPrice();
-        if (numUnits.get(unit.getType().toString()) == 1) {
-            numUnits.remove(unit.getType().toString());
-        } else {
-            numUnits.put(unit.getType().toString(), numUnits.get(unit.getType().toString()) - 1);
-        }
-        if (!numDeadUnits.containsKey(unit.getType().toString())) {
-            numDeadUnits.put(unit.getType().toString(), 1);
-        } else {
-            numDeadUnits.put(unit.getType().toString(), numDeadUnits.get(unit.getType().toString()) + 1);
-        }
-
-        unitAndUnitInfoMap.remove(unit.getID());
+    public int getCompletedCount(UnitType type) {
+        return completedCount.getOrDefault(type, 0);
     }
 
-    /// 포인터가 null 이 되었거나, 파괴되어 Resource_Vespene_Geyser 로 돌아간 Refinery, 예전에는 건물이 있었던
-    /// 걸로 저장해두었는데 지금은 파괴되어 없어진 건물 (특히, 테란의 경우 불타서 소멸한 건물) 데이터를 제거합니다
-    public void removeBadUnits() {
-
-        for (Integer integer : unitAndUnitInfoMap.keySet()) {
-            UnitInfo ui = unitAndUnitInfoMap.get(integer);
-            if (isBadUnitInfo(ui)) {
-                Unit unit = ui.getUnit();
-                if (numUnits.get(unit.getType().toString()) != null) {
-                    numUnits.put(unit.getType().toString(), numUnits.get(unit.getType().toString()) - 1);
-                }
-
-                badUnitsToRemove.add(unit.getID());
-            }
-        }
-
-        if (badUnitsToRemove.size() > 0) {
-            for (Integer i : badUnitsToRemove) {
-                unitAndUnitInfoMap.remove(i);
-            }
-            badUnitsToRemove.clear();
-        }
+    public int getDestroyedCount(UnitType type) {
+        return destroyedCount.getOrDefault(type, 0);
     }
 
-    public final boolean isBadUnitInfo(final UnitInfo ui) {
-        if (ui.getUnit() == null) {
-            return false;
-        }
+    public HashMap<UnitType, Integer> getDestroyedCountMap() {
+        return destroyedCount;
+    }
 
-        // Cull away any refineries / assimilators / extractors that were destroyed and
-        // reverted to vespene geysers
-        if (ui.getUnit().getType() == UnitType.Resource_Vespene_Geyser) {
+    public int getAllCount(UnitType type) {
+        return allCount.getOrDefault(type, 0);
+    }
+
+    public void increaseCompleteUnits(UnitType type) {
+        UnitType unitType = getUnitTypeDB(type);
+
+        completedCount.computeIfAbsent(type, type1 -> 0);
+        completedCount.replace(type, completedCount.get(type)+1);
+    }
+
+    public void increaseDestroyUnits(UnitType type) {
+        UnitType unitType = getUnitTypeDB(type);
+
+        destroyedCount.computeIfAbsent(type, type1 -> 0);
+        destroyedCount.replace(type, destroyedCount.get(type)+1);
+    }
+
+    public void increaseCreateUnits(UnitType type) {
+        UnitType unitType = getUnitTypeDB(type);
+
+        allCount.computeIfAbsent(type, type1 -> 0);
+        allCount.replace(type, allCount.get(type)+1);
+    }
+
+    public void decreaseCompleteUnits(UnitType type) {
+        UnitType unitType = getUnitTypeDB(type);
+
+        completedCount.replace(type, completedCount.get(type)+1);
+    }
+
+    public void decreaseCreateUnits(UnitType type) {
+        UnitType unitType = getUnitTypeDB(type);
+
+        allCount.replace(type, allCount.get(type)+1);
+    }
+
+    public boolean addUnitAndBuilding(Unit u) {
+        UnitType type = getUnitTypeDB(u.getType());
+
+        HashMap<Unit, UnitInfo> unitMap = type.isBuilding() ? getAllBuildings() : getAllUnits();
+        ArrayList<UnitInfo> unitInfoArrayList = type.isBuilding() ? getBuildingList(type) : getUnitList(type);
+
+        if (!unitMap.containsKey(u)) {
+            UnitInfo pUnit = new UnitInfo(u);
+            unitMap.put(u, pUnit);
+            unitInfoArrayList.add(pUnit);
+
             return true;
         }
 
-        // If the unit is a building, and we can currently see its position, and it is not
-        // there
-        return ui.getType().isBuilding()
-                && BasicBotModule.BroodWar.isVisible(ui.getLastPosition().getX() / 32, ui.getLastPosition().getY() / 32)
-                && !ui.getUnit().isVisible();
+        return false;
+    }
+    
+    public void removeUnitAndBuilding(Unit u) {
+        UnitType type = getUnitTypeDB(u.getType());
+
+        HashMap<Unit, UnitInfo> unitMap = type.isBuilding() ? getAllBuildings() : getAllUnits();
+        ArrayList<UnitInfo> unitInfoArrayList = type.isBuilding() ? getBuildingList(type) : getUnitList(type);
+
+        if (unitMap.containsKey(u)) {
+            UnitInfo delUnit = null;
+
+            for (UnitInfo info : unitInfoArrayList) {
+                if (info.getUnit() == u) {
+                    delUnit = info;
+                    break;
+                }
+            }
+            if (delUnit != null) {
+                Utils.fastErase(unitInfoArrayList, unitInfoArrayList.indexOf(delUnit));
+            }
+            else {
+                System.out.println("Remove Unit ERROR");
+            }
+
+            unitMap.remove(u);
+
+            if (u.getPlayer() == BasicBotModule.BroodWar.self()) {
+                if (u.isCompleted()) {
+                    decreaseCompleteUnits(type);
+                }
+                decreaseCreateUnits(type);
+            }
+
+            increaseDestroyUnits(type);
+        }
+
     }
 
-    /// 사망한 유닛을 생산하는데 소요되었던 Gas 의 누적값 (얼마나 손해를 보았는가 계산하기 위함임)
-    public final int getGasLost() {
-        return gasLost;
+    // TODO removeUnitAndBuilding
+    // TODO initializeAllInfo
+    // TODO updateAllInfo
+    // TODO updateAndCheckTypeAllInfo
+
+    public UnitType getUnitTypeDB(UnitType type) {
+        if (type == UnitType.Terran_Siege_Tank_Siege_Mode) {
+            return UnitType.Terran_Siege_Tank_Tank_Mode;
+        }
+        if (type == UnitType.Zerg_Lurker_Egg) {
+            return UnitType.Zerg_Lurker;
+        }
+
+        return type;
     }
 
-    /// 사망한 유닛을 생산하는데 소요되었던 Mineral 의 누적값 (얼마나 손해를 보았는가 계산하기 위함임) 을 리턴합니다
-    public final int getMineralsLost() {
-        return mineralsLost;
-    }
 
-    /// 해당 UnitType 의 식별된 Unit 숫자를 리턴합니다
-    public final int getNumUnits(String t) {
-        if (numUnits.get(t) != null) {
-            return numUnits.get(t);
-        } else {
-            return 0;
+    static class UListSet {
+        private ArrayList<UnitInfo> units = new ArrayList<>();
+
+        Position getPos() {
+            int avgPosX = 0;
+            int avgPosY = 0;
+
+            if (units.size() != 0) {
+                for (UnitInfo u : units) {
+                    avgPosX += u.getPos().x;
+                    avgPosY += u.getPos().y;
+                }
+                avgPosX /= units.size();
+                avgPosY /= units.size();
+            }
+            return new Position(avgPosX, avgPosY);
+        }
+
+        void add(UnitInfo uInfo) {
+            if (units.size() != 0) {
+                UnitInfo addUnit = null;
+                for (UnitInfo up : units) {
+                    if (up == uInfo) {
+                        addUnit = up;
+                        break;
+                    }
+                }
+                if (addUnit != null) {
+                    units.add(addUnit);
+                }
+            }
+            else {
+                units.add(uInfo);
+            }
+        }
+
+        void del(Unit u) {
+            if (units.size() != 0) {
+                UnitInfo delUnit = null;
+                for (UnitInfo up : units) {
+                    if (up.getUnit() == u) {
+                        delUnit = up;
+                        break;
+                    }
+                }
+                if (delUnit != null) {
+                    Utils.fastErase(units, units.indexOf(delUnit));
+                }
+            }
+        }
+
+        void del(UnitInfo u) {
+            if (units.size() != 0) {
+                UnitInfo delUnit = null;
+                for (UnitInfo up : units) {
+                    if (up == u) {
+                        delUnit = up;
+                        break;
+                    }
+                }
+                if (delUnit != null) {
+                    Utils.fastErase(units, units.indexOf(delUnit));
+                }
+            }
+        }
+
+        int size() {
+            return this.units.size();
+        }
+
+        ArrayList<UnitInfo> getUnits() {
+            return units;
+        }
+
+        void clear() {
+            this.units.clear();
+        }
+
+        boolean isEmpty() {
+            return this.units.isEmpty();
+        }
+
+        UnitInfo getFrontUnitFromPosition(Position t) {
+            int distance = Integer.MAX_VALUE;
+            int temp = 0;
+            UnitInfo frontUnit = null;
+
+            for (UnitInfo u : units) {
+                temp = BasicBotModule.Map.getMap().getPathLength(u.getPos(), t);
+                if (temp >= 0 && temp < distance) {
+                    frontUnit = u;
+                    distance = temp;
+                }
+            }
+
+            return frontUnit;
+        }
+
+        ArrayList<UnitInfo> getSortedUnitList(Position targetPos, boolean reverseOrder) {
+            ArrayList<Pair<Integer, UnitInfo>> sortList = new ArrayList<>();
+
+            for (UnitInfo t : units) {
+                int tempDist = BasicBotModule.Map.getMap().getPathLength(t.getPos(), targetPos);
+
+                if (tempDist < 0) {
+                    continue;
+                }
+
+                sortList.add(new Pair<Integer, UnitInfo>(tempDist, t));
+            }
+
+            if (reverseOrder) {
+                sortList.sort((o1, o2) -> {
+                    if (o1.getFirst() > o2.getFirst()) return 1;
+                    else if (o1.getFirst() < o2.getFirst()) return -1;
+                    return 0;
+                });
+            }
+            else {
+                sortList.sort((o1, o2) -> {
+                    if (o1.getFirst() < o2.getFirst()) return 1;
+                    else if (o1.getFirst() > o2.getFirst()) return -1;
+                    return 0;
+                });
+            }
+
+            ArrayList<UnitInfo> sortedList = new ArrayList<>();
+
+            for (int i = 0; i < sortList.size(); i++) {
+                sortedList.add(sortList.get(i).getSecond());
+            }
+
+            return sortedList;
         }
     }
 
-    /// 해당 UnitType 의 식별된 Unit 파괴/사망 누적값을 리턴합니다
-    public final int getNumDeadUnits(String t) {
-        if (numDeadUnits.get(t) != null) {
-            return numDeadUnits.get(t);
-        } else {
-            return 0;
-        }
+    public HashMap<Unit, UnitInfo> getAllUnits() {
+        return allUnits;
     }
 
-    /// 해당 UnitType 의 식별된 Unit 건설/훈련 누적값을 리턴합니다
-    public final int getNumCreatedUnits(String t) {
-        if (numCreatedUnits.get(t) != null) {
-            return numCreatedUnits.get(t);
-        } else {
-            return 0;
-        }
+    public HashMap<Unit, UnitInfo> getAllBuildings() {
+        return allBuildings;
     }
 
-    public final Map<Integer, UnitInfo> getUnitAndUnitInfoMap() {
-        return unitAndUnitInfoMap;
+    public HashMap<Integer, Pair<Integer, Position>> getAllSpells() {
+        return allSpells;
     }
 
-    public Map<String, Integer> getNumDeadUnits() {
-        return numDeadUnits;
+    public HashMap<UnitType, ArrayList<UnitInfo>> getUnitTypeMap() {
+        return unitTypeMap;
     }
 
-    public Map<String, Integer> getNumCreatedUnits() {
-        return numCreatedUnits;
+    public HashMap<UnitType, ArrayList<UnitInfo>> getBuildingTypeMap() {
+        return buildingTypeMap;
     }
 
-    public Map<String, Integer> getNumUnits() {
-        return numUnits;
+    public HashMap<UnitType, Integer> getCompletedCount() {
+        return completedCount;
+    }
+
+    public HashMap<UnitType, Integer> getDestroyedCount() {
+        return destroyedCount;
+    }
+
+    public HashMap<UnitType, Integer> getAllCount() {
+        return allCount;
     }
 
 }

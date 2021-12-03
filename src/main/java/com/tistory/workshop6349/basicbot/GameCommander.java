@@ -96,4 +96,17 @@ public class GameCommander {
 
     }
 
+    public void onUnitLifted(Unit unit) {
+        if (unit.getPlayer() == BasicBotModule.BroodWar.self()) {
+//            TODO ScvManager::Instance ().onUnitLifted(unit);
+
+        }
+    }
+
+    public void onUnitLanded(Unit unit) {
+        if (unit.getPlayer() == BasicBotModule.BroodWar.self()) {
+//            TODO ScvManager::Instance ().onUnitLanded(unit);
+        }
+    }
+
 }
