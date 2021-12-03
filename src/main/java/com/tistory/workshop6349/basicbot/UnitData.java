@@ -1,10 +1,8 @@
 package com.tistory.workshop6349.basicbot;
 
-import bwapi.Pair;
-import bwapi.Position;
-import bwapi.Unit;
-import bwapi.UnitType;
+import bwapi.*;
 import bwem.util.Utils;
+import com.sun.xml.internal.bind.v2.TODO;
 
 import java.util.*;
 
@@ -135,9 +133,44 @@ public class UnitData {
 
     }
 
-    // TODO removeUnitAndBuilding
-    // TODO initializeAllInfo
+    public void initializeAllInfo() {
+        for (UnitInfo u : allUnits.values()) {
+            u.initFrame();
+        }
+
+        for (UnitInfo u : allBuildings.values()) {
+            u.initFrame();
+        }
+    }
+
     // TODO updateAllInfo
+    public void updateAllInfo() {
+        initializeAllInfo();
+
+        HashMap<Integer, Pair<Integer, Position>> spellMap = getAllSpells();
+
+        for (Bullet b : BasicBotModule.BroodWar.getBullets()) {
+            if (b.getType() == BulletType.Fusion_Cutter_Hit
+                    && b.getSource() != null
+                    && b.getSource().getPlayer() == BasicBotModule.BroodWar.self()
+                    && b.getTarget() != null
+                    && b.getTarget().isBeingGathered()) {
+                HashMap<Unit, UnitInfo> m = getAllUnits();
+                m.get(b.getSource()).setGatheringMinerals();
+            }
+
+            if (b.getType() == BulletType.EMP_Missile
+                    && b.getSource() != null
+                    && b.getSource().getPlayer() == BasicBotModule.BroodWar.self()) {
+                // TODO makePair 찾아야함
+            }
+        }
+        
+    }
+
+
+
+
     // TODO updateAndCheckTypeAllInfo
 
     public UnitType getUnitTypeDB(UnitType type) {

@@ -5,7 +5,6 @@ import bwapi.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
-import java.util.Vector;
 
 public class UnitInfo {
 
@@ -47,7 +46,7 @@ public class UnitInfo {
     private int marineInBunker;
     private boolean gatheringMinerals;
 
-    private Vector<Unit> enemiesTargetMe;
+    private ArrayList<Unit> enemiesTargetMe;
     private Position avgEnemyPosition;
     private Unit veryFrontEnemyUnit;
 
@@ -434,7 +433,90 @@ public class UnitInfo {
         return hide;
     }
 
+    public ArrayList<Unit> getEnemiesTargetMe() {
+        return enemiesTargetMe;
+    }
 
+    public Position getAvgEnemyPosition() {
+        return avgEnemyPosition;
+    }
+
+    public Unit getVeryFrontEnemyUnit() {
+        return veryFrontEnemyUnit;
+    }
+
+    public void clearAvgEnemyPos() {
+        avgEnemyPosition = Position.None;
+    }
+
+    public void	clearVeryFrontEnemyUnit() {
+        veryFrontEnemyUnit = null;
+    }
+
+    public boolean isGatheringMinerals() {
+        return gatheringMinerals;
+    }
+
+    public void setGatheringMinerals() {
+        gatheringMinerals = true;
+    }
+
+    public void setMarineInBunker() {
+        marineInBunker++;
+    }
+
+    public void	setKillMe(int i) {
+        killMe = i;
+    }
+
+    public void setKillMe() {
+        setKillMe(1);
+    }
+
+    public int getLastPositionTime() {
+        return lastPositionTime;
+    }
+
+    public Position getLastSeenPosition() {
+        return lastSeenPosition;
+    }
+
+    public int getSpaceRemaining() {
+        return spaceRemaining;
+    }
+
+    public void addSpaceRemaining(int space) {
+        spaceRemaining += space;
+    }
+
+    public void	delSpaceRemaining(int space) {
+        spaceRemaining -= space;
+    }
+
+    public void initSpaceRemaining() {
+        spaceRemaining = unit.getSpaceRemaining();
+    }
+
+    public int getLastSiegeOrUnSiegeTime() {
+        return lastSiegeOrUnSiegeTime;
+    }
+
+    public void setLastSiegeOrUnsiegeTime(int lastSiegeOrUnsiegeTime) {
+        lastSiegeOrUnSiegeTime = lastSiegeOrUnsiegeTime;
+    }
+
+    public int getCompletedTime() {
+        return completedTime;
+    }
+
+    // TODO State
+//    public Position getIdlePos() {
+//
+//    }
+
+    public boolean isBlocked() {
+        return blockedCount > 25;
+    }
 
     @Override
     public boolean equals(Object o) {
