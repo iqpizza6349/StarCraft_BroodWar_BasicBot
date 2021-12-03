@@ -105,6 +105,9 @@ public class InformationManager {
         enemyInMyArea.clear();
         enemyInMyYard.clear();
 
+        HashMap<Unit, UnitInfo> allUnits = unitData.get(BasicBotModule.BroodWar.enemy()).getAllUnits();
+
+        
 
     }
 
