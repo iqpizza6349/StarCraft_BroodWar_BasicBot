@@ -163,7 +163,7 @@ public class GridArea {
         int wBase = (bottomRight.x - topLeft.x) / N;
         int wRemain = bottomRight.x - topLeft.x - N * wBase;
 
-        TilePosition myBase = BasicBotModule.BroodWar.self().getStartLocation();
+        TilePosition myBase = Common.Self().getStartLocation();
 
         if (myBase.x <= (topLeft.x + bottomRight.x) / 2) {
             isMyBaseRight = false;

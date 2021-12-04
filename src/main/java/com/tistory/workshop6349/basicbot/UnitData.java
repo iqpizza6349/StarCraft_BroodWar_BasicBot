@@ -2,22 +2,21 @@ package com.tistory.workshop6349.basicbot;
 
 import bwapi.*;
 import bwem.util.Utils;
-import com.sun.xml.internal.bind.v2.TODO;
 
 import java.util.*;
 
 public class UnitData {
 
-    private HashMap<UnitType, ArrayList<UnitInfo>> unitTypeMap = new HashMap<>();
-    private HashMap<UnitType, ArrayList<UnitInfo>> buildingTypeMap = new HashMap<>();
+    private final HashMap<UnitType, ArrayList<UnitInfo>> unitTypeMap = new HashMap<>();
+    private final HashMap<UnitType, ArrayList<UnitInfo>> buildingTypeMap = new HashMap<>();
 
-    private HashMap<Unit, UnitInfo> allUnits = new HashMap<>();
-    private HashMap<Unit, UnitInfo> allBuildings = new HashMap<>();
-    private HashMap<Integer, Pair<Integer, Position>> allSpells = new HashMap<>();
+    private final HashMap<Unit, UnitInfo> allUnits = new HashMap<>();
+    private final HashMap<Unit, UnitInfo> allBuildings = new HashMap<>();
+    private final HashMap<Integer, Pair<Integer, Position>> allSpells = new HashMap<>();
 
-    private HashMap<UnitType, Integer> completedCount = new HashMap<>();
-    private HashMap<UnitType, Integer> destroyedCount = new HashMap<>();
-    private HashMap<UnitType, Integer> allCount = new HashMap<>();
+    private final HashMap<UnitType, Integer> completedCount = new HashMap<>();
+    private final HashMap<UnitType, Integer> destroyedCount = new HashMap<>();
+    private final HashMap<UnitType, Integer> allCount = new HashMap<>();
 
     public UnitData() {}
 
@@ -121,7 +120,7 @@ public class UnitData {
 
             unitMap.remove(u);
 
-            if (u.getPlayer() == BasicBotModule.BroodWar.self()) {
+            if (u.getPlayer() == Common.Self()) {
                 if (u.isCompleted()) {
                     decreaseCompleteUnits(type);
                 }
@@ -152,7 +151,7 @@ public class UnitData {
         for (Bullet b : BasicBotModule.BroodWar.getBullets()) {
             if (b.getType() == BulletType.Fusion_Cutter_Hit
                     && b.getSource() != null
-                    && b.getSource().getPlayer() == BasicBotModule.BroodWar.self()
+                    && b.getSource().getPlayer() == Common.Self()
                     && b.getTarget() != null
                     && b.getTarget().isBeingGathered()) {
                 HashMap<Unit, UnitInfo> m = getAllUnits();
@@ -161,9 +160,28 @@ public class UnitData {
 
             if (b.getType() == BulletType.EMP_Missile
                     && b.getSource() != null
-                    && b.getSource().getPlayer() == BasicBotModule.BroodWar.self()) {
-                // TODO makePair 찾아야함
+                    && b.getSource().getPlayer() == Common.Self()) {
+                spellMap.put(b.getID(), new Pair<>(Common.TIME(), b.getTargetPosition()));
             }
+
+            if (Common.TIME() % 12 == 0
+                    && b.getType() == BulletType.Gauss_Rifle_Hit
+                    && b.getSource() == null) {
+                int gap;
+
+                if (Common.Enemy().getUpgradeLevel(UpgradeType.U_238_Shells) == 1) {
+                    gap = 8;
+                }
+                else {
+                    gap = 7;
+                }
+
+                if (b.getTarget() != null && b.getTarget().getPlayer() == Common.Self()) {
+                    ArrayList<UnitInfo> bunkers; // TODO Information;
+                }
+            }
+
+
         }
         
     }
@@ -186,13 +204,13 @@ public class UnitData {
 
 
     static class UListSet {
-        private ArrayList<UnitInfo> units = new ArrayList<>();
+        private final ArrayList<UnitInfo> units = new ArrayList<>();
 
         Position getPos() {
             int avgPosX = 0;
             int avgPosY = 0;
 
-            if (units.size() != 0) {
+            if (!units.isEmpty()) {
                 for (UnitInfo u : units) {
                     avgPosX += u.getPos().x;
                     avgPosY += u.getPos().y;
@@ -204,7 +222,7 @@ public class UnitData {
         }
 
         void add(UnitInfo uInfo) {
-            if (units.size() != 0) {
+            if (!units.isEmpty()) {
                 UnitInfo addUnit = null;
                 for (UnitInfo up : units) {
                     if (up == uInfo) {
@@ -212,7 +230,7 @@ public class UnitData {
                         break;
                     }
                 }
-                if (addUnit != null) {
+                if (addUnit != null && !units.contains(addUnit)) {
                     units.add(addUnit);
                 }
             }
@@ -222,7 +240,7 @@ public class UnitData {
         }
 
         void del(Unit u) {
-            if (units.size() != 0) {
+            if (!units.isEmpty()) {
                 UnitInfo delUnit = null;
                 for (UnitInfo up : units) {
                     if (up.getUnit() == u) {
@@ -230,14 +248,14 @@ public class UnitData {
                         break;
                     }
                 }
-                if (delUnit != null) {
+                if (delUnit != null && units.contains(delUnit)) {
                     Utils.fastErase(units, units.indexOf(delUnit));
                 }
             }
         }
 
         void del(UnitInfo u) {
-            if (units.size() != 0) {
+            if (!units.isEmpty()) {
                 UnitInfo delUnit = null;
                 for (UnitInfo up : units) {
                     if (up == u) {
@@ -245,14 +263,14 @@ public class UnitData {
                         break;
                     }
                 }
-                if (delUnit != null) {
+                if (delUnit != null && units.contains(delUnit)) {
                     Utils.fastErase(units, units.indexOf(delUnit));
                 }
             }
         }
 
         int size() {
-            return this.units.size();
+            return units.size();
         }
 
         ArrayList<UnitInfo> getUnits() {
@@ -264,7 +282,7 @@ public class UnitData {
         }
 
         boolean isEmpty() {
-            return this.units.isEmpty();
+            return units.isEmpty();
         }
 
         UnitInfo getFrontUnitFromPosition(Position t) {
@@ -313,8 +331,8 @@ public class UnitData {
 
             ArrayList<UnitInfo> sortedList = new ArrayList<>();
 
-            for (int i = 0; i < sortList.size(); i++) {
-                sortedList.add(sortList.get(i).getSecond());
+            for (Pair<Integer, UnitInfo> integerUnitInfoPair : sortList) {
+                sortedList.add(integerUnitInfoPair.getSecond());
             }
 
             return sortedList;

@@ -5,10 +5,7 @@ import bwem.Area;
 import bwem.Base;
 import bwem.ChokePoint;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public class InformationManager {
 
@@ -54,8 +51,11 @@ public class InformationManager {
     public ArrayList<Base> startBaseLocations = new ArrayList<>();
     public ArrayList<Base> allBaseLocations = new ArrayList<>();
 
-    public ArrayList<Unit> enemyInMyArea = new ArrayList<>();
-    public ArrayList<Unit> enemyInMyYard = new ArrayList<>();
+    public ArrayList<UnitInfo> enemyInMyArea = new ArrayList<>();
+    public ArrayList<UnitInfo> enemyInMyYard = new ArrayList<>();
+
+    public boolean isEnemyScanResearched;
+    public int availableScanCount;
 
     public HashSet<TechType> researchSet = new HashSet<>();
     public Position firstWaitLinePosition = Position.Unknown;                   // 앞마당 먹는 시점에서 최초 1회 실행
@@ -80,8 +80,8 @@ public class InformationManager {
     public InformationManager() {
         mapPlayerLimit = BasicBotModule.BroodWar.getStartLocations().size();
 
-        selfPlayer = BasicBotModule.BroodWar.self();
-        enemyPlayer = BasicBotModule.BroodWar.enemy();
+        selfPlayer = Common.Self();
+        enemyPlayer = Common.Enemy();
 
         selfRace = selfPlayer.getRace();
         enemyRace = enemyPlayer.getRace();
@@ -105,11 +105,111 @@ public class InformationManager {
         enemyInMyArea.clear();
         enemyInMyYard.clear();
 
-        HashMap<Unit, UnitInfo> allUnits = unitData.get(BasicBotModule.BroodWar.enemy()).getAllUnits();
+        HashMap<Unit, UnitInfo> allUnits = unitData.get(Common.Enemy()).getAllUnits();
 
-        
-
+        for (UnitInfo eu : allUnits.values()) {
+            if (BasicUtil.isInMyArea(eu)) {
+                enemyInMyArea.add(eu);
+                enemyInMyYard.add(eu);
+            }
+            else {
+                if (!eu.getType().isFlyer()
+                        && eu.getUnit().getPosition().getApproxDistance(InformationManager.getInstance().getSecondAverageChokePosition(Common.Self())) < 300) {
+                    // 300TILE 은 시즈탱크 최대 사거리에 약간 모자르다.
+                    enemyInMyYard.add(eu);
+                }
+            }
+        }
     }
+
+    public void updateStartAndBaseLocation() {
+        for (Area area : BasicBotModule.Map.getMap().getAreas()) {
+            for (Base base : area.getBases()) {
+                if (base.isStartingLocation()) {
+                    startBaseLocations.add(base);
+                }
+                allBaseLocations.add(base);
+            }
+        }
+
+        // 2인용 맵은 정렬 X
+        if (startBaseLocations.size() <= 2) {
+            return;
+        }
+
+        if (enemyRace == Race.Protoss) {
+            startBaseLocations.sort((a, b) -> {
+                TilePosition myBase = InformationManager.getInstance().getStartLocation(Common.Self()).getLocation();
+                return Boolean.compare(myBase.getApproxDistance(a.getLocation()) < myBase.getApproxDistance(b.getLocation()), false); // TODO 오류 생기면 다시 해야함
+            });
+        }
+        else {
+            // 시계방향 (맵 중앙 기준)으로 정렬
+            startBaseLocations.sort((a, b) -> {
+                TilePosition C = BasicBotModule.Map.getMap().getCenter().toTilePosition();
+                TilePosition A = new TilePosition(a.getLocation().x - C.x, a.getLocation().y - C.y);
+                TilePosition B = new TilePosition(b.getLocation().x - C.x, b.getLocation().y - C.y);
+
+                int d1 = C.getApproxDistance(A);
+                int d2 = C.getApproxDistance(B);
+
+                double ang1 = Math.atan2(A.y, A.x);
+                double ang2 = Math.atan2(B.y, B.x);
+
+                if (ang1 < 0) {
+                    ang1 += 2 * 3.141592;
+                }
+                if (ang2 < 0) {
+                    ang2 += 2 * 3.141592;
+                }
+
+                return Boolean.compare(ang1 < ang2 || (ang1 == ang2 && d1 < d2) , false);   // TODO 오류 생기면 다시 해야함
+            });
+        }
+
+        for (Base base : startBaseLocations) {
+            System.out.println("Base (" + base.getLocation().x + ", " + base.getLocation().y + ") " + (base.getLocation() == Common.Self().getStartLocation() ? "<-- My Base" : "EMPTY"));
+        }
+    }
+
+    public Base getBaseLocation(TilePosition pos) {
+        for (Base base : allBaseLocations) {
+            if (base.getLocation().equals(pos)) {
+                return base;
+            }
+        }
+        return null;
+    }
+
+    public Base getStartLocation(Player p) {
+        for (Base base : startBaseLocations) {
+            if (p.getStartLocation().equals(base.getLocation())) {
+                return base;
+            }
+        }
+        return null;
+    }
+
+    public Base getNearestBaseLocation(Position pos, boolean groundDist) {
+        Base ret = null;
+
+        int dist = 10000;
+
+        for (Base base : allBaseLocations) {
+            int temp = groundDist ? BasicUtil.getGroundDistance(pos, base.getLocation().toPosition()) : pos.getApproxDistance(base.getLocation().toPosition());
+
+            if (temp >= 0 && dist > temp) {
+                dist = temp;
+                ret = base;
+            }
+        }
+
+        return ret;
+    }
+
+    // getMineChokePoints() 는 안쓰는 메소드이기에 PASS
+
+
 
 
 
@@ -150,6 +250,14 @@ public class InformationManager {
         return mapPlayerLimit;
     }
 
+    public ArrayList<Base> getStartLocations() {
+        return startBaseLocations;
+    }
+
+    public ArrayList<Base> getBaseLocations() {
+        return allBaseLocations;
+    }
+
     public UnitData getUnitData(Player player) {
         return unitData.get(player);
     }
@@ -174,9 +282,40 @@ public class InformationManager {
         return Position.Invalid; //TODO ERROR
     }
 
+    public ArrayList<UnitInfo> getUnits(UnitType t, Player p) {
+        return unitData.get(p).getUnitList(t);
+    }
 
+    public ArrayList<UnitInfo> getBuildings(UnitType t, Player p) {
+        return unitData.get(p).getBuildingList(t);
+    }
 
+    public HashMap<Unit, UnitInfo> getUnits(Player p) {
+        return unitData.get(p).getAllUnits();
+    }
 
+    public HashMap<Unit, UnitInfo> getBuildings(Player p) {
+        return unitData.get(p).getAllBuildings();
+    }
 
+    public boolean getEnemyScanResearched() {
+        return isEnemyScanResearched;
+    }
+    
+    public int getAvailableScanCount() {
+        return availableScanCount;
+    }
+
+    public Area getMainBasePairArea(Area area) {
+        return mainBaseAreaPair.get(area);
+    }
+
+    public ArrayList<UnitInfo> enemyInMyArea() {
+        return enemyInMyArea;
+    }
+
+    public ArrayList<UnitInfo> enemyInMyYard() {
+        return enemyInMyYard;
+    }
 
 }

@@ -173,13 +173,24 @@ public class BasicUtil {
         return narrow || blockedCount > 1;
     }
 
-//    public static boolean isInMyArea(UnitInfo unitInfo) {
-//        return unitInfo.getType().isFlyer() ? isInMyAreaAir(unitInfo.getPos()) : isInMyArea(unitInfo.getPos());
-//    }
-//
-//    public static boolean isInMyArea(Position p, boolean getMyAllBase) {
-//
-//    }
+    public static boolean isInMyArea(UnitInfo unitInfo) {
+        return unitInfo.getType().isFlyer() ? isInMyAreaAir(unitInfo.getPos()) : isInMyArea(unitInfo.getPos(), false);
+    }
+
+    public static boolean isInMyArea(Position p, boolean getMyAllBase) {
+        if (getMyAllBase) {
+            if (p.equals(Position.Unknown)) {
+                return false;
+            }
+
+//            if (isSameArea()) TODO
+        }
+        return false; // TODO
+    }
+
+    public static boolean isInMyAreaAir(Position p) {
+        return false; // TODO
+    }
 
 
 

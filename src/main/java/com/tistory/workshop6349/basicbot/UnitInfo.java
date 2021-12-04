@@ -128,12 +128,12 @@ public class UnitInfo {
                 completedTime = BasicBotModule.BroodWar.getFrameCount() + remainingBuildTime;
             }
 
-            if (unit.getPlayer() == BasicBotModule.BroodWar.self()) {
+            if (unit.getPlayer() == Common.Self()) {
                 lastEnergy = unit.getEnergy();
                 spaceRemaining = unit.getSpaceRemaining();
             }
             else {
-                lastEnergy = Math.min((double)BasicBotModule.BroodWar.enemy().maxEnergy(type), lastEnergy + 0.03125);
+                lastEnergy = Math.min((double)Common.Enemy().maxEnergy(type), lastEnergy + 0.03125);
 
                 if (isShowThisFrame) {
                     if (!type.isFlyer() && !type.isBuilding()) {
@@ -189,7 +189,7 @@ public class UnitInfo {
             }
 
             if (type == UnitType.Terran_Vulture_Spider_Mine) {
-                if (unit.getPlayer() == BasicBotModule.BroodWar.self()) {
+                if (unit.getPlayer() == Common.Self()) {
                     dangerMine = false;
 
                     // TODO Information getUnitsInRadius() 처리해야함
@@ -220,11 +220,11 @@ public class UnitInfo {
             }
 
             if (BasicBotModule.BroodWar.getFrameCount() % 12 == 0
-                    && unit.getPlayer() != BasicBotModule.BroodWar.self()
+                    && unit.getPlayer() != Common.Self()
                     && type == UnitType.Terran_Bunker) {
                 int gap;
 
-                if (BasicBotModule.BroodWar.enemy().getUpgradeLevel(UpgradeType.U_238_Shells) == 1) {
+                if (Common.Enemy().getUpgradeLevel(UpgradeType.U_238_Shells) == 1) {
                     gap = 8;
                 }
                 else {
@@ -234,15 +234,15 @@ public class UnitInfo {
                 // TODO Information.getInstance().getClosestUnit 처리해야함
             }
 
-            if (unit.getPlayer() != BasicBotModule.BroodWar.self() && type.canAttack()) {
+            if (unit.getPlayer() != Common.Self() && type.canAttack()) {
                 if (unit.getOrderTarget() != null
                         && unit.getOrderTarget().exists()
-                        && unit.getOrderTarget().getPlayer() == BasicBotModule.BroodWar.self()) {
+                        && unit.getOrderTarget().getPlayer() == Common.Self()) {
                     // TODO Information.getInstance().getUnitInfo() 처리해야함
                 }
                 else if (unit.getTarget() != null
                         && unit.getTarget().exists()
-                        && unit.getTarget().getPlayer() == BasicBotModule.BroodWar.self()) {
+                        && unit.getTarget().getPlayer() == Common.Self()) {
                     // TODO Information.getInstance().getUnitInfo() 처리해야함
                 }
                 else if (!unit.isDetected()) {
@@ -289,7 +289,7 @@ public class UnitInfo {
                 }
             }
 
-            lastEnergy = Math.min((double)BasicBotModule.BroodWar.enemy().maxEnergy(type), lastEnergy + 0.03125);
+            lastEnergy = Math.min((double)Common.Enemy().maxEnergy(type), lastEnergy + 0.03125);
 
             if (!lastPosition.equals(Position.Unknown)) {
                 if (burrowed) {

@@ -1,11 +1,27 @@
 package com.tistory.workshop6349.basicbot;
 
+import bwapi.Player;
+
 import java.io.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.concurrent.TimeUnit;
 
 public class Common {
+
+    public static int TIME() {
+        return BasicBotModule.BroodWar.getFrameCount(); // 어차피 계속 쓸 거 같아서 만듬
+    }
+
+    public static Player Enemy() {
+        return BasicBotModule.BroodWar.enemy();
+    }
+
+    public static Player Self() {
+        return BasicBotModule.BroodWar.self();
+    }
+
+
 
     public static void appendTextToFile(String logFile, String msg) {
         try {
@@ -67,7 +83,7 @@ public class Common {
     }
 
     public static void readResults() {
-        String enemyName = BasicBotModule.BroodWar.enemy().getName();
+        String enemyName = Common.Enemy().getName();
         enemyName = enemyName.replace(" ", "_");
 
         String enemyResultsFile = Config.readDirectory + enemyName + ".txt";
@@ -87,7 +103,7 @@ public class Common {
     }
 
     public static void writeResults() {
-        String enemyName = BasicBotModule.BroodWar.enemy().getName();
+        String enemyName = Common.Enemy().getName();
         enemyName = enemyName.replace(" ", "_");
 
         String enemyResultsFile = Config.readDirectory + enemyName + ".txt";

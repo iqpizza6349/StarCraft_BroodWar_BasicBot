@@ -18,7 +18,7 @@ public class GameCommander {
     }
 
     public void onStart() {
-        TilePosition startLocation = BasicBotModule.BroodWar.self().getStartLocation();
+        TilePosition startLocation = Common.Self().getStartLocation();
 
         if (startLocation == TilePosition.Unknown || startLocation == TilePosition.None) {
             System.out.println("오류로 인해 진행 불가 상태입니다.");
@@ -97,14 +97,14 @@ public class GameCommander {
     }
 
     public void onUnitLifted(Unit unit) {
-        if (unit.getPlayer() == BasicBotModule.BroodWar.self()) {
+        if (unit.getPlayer() == Common.Self()) {
 //            TODO ScvManager::Instance ().onUnitLifted(unit);
 
         }
     }
 
     public void onUnitLanded(Unit unit) {
-        if (unit.getPlayer() == BasicBotModule.BroodWar.self()) {
+        if (unit.getPlayer() == Common.Self()) {
 //            TODO ScvManager::Instance ().onUnitLanded(unit);
         }
     }
