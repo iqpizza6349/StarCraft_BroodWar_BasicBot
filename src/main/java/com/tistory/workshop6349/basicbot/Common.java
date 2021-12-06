@@ -22,8 +22,7 @@ public class Common {
     }
 
     /// 로그 유틸
-    public static void appendTextToFile(final String logFile, final String msg)
-    {
+    public static void appendTextToFile(final String logFile, final String msg) {
         try {
             BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(logFile, true));
             bos.write(msg.getBytes());
@@ -35,8 +34,7 @@ public class Common {
     }
 
     /// 로그 유틸
-    public static void overwriteToFile(final String logFile, final String msg)
-    {
+    public static void overwriteToFile(final String logFile, final String msg) {
         try {
             BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(logFile));
             bos.write(msg.getBytes());
@@ -48,8 +46,7 @@ public class Common {
     }
 
     /// 파일 유틸 - 텍스트 파일을 읽어들인다
-    public static String readFile(final String filename)
-    {
+    public static String readFile(final String filename) {
         BufferedInputStream bis;
         StringBuilder sb = new StringBuilder();
         try {

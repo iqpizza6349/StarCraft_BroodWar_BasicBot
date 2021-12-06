@@ -1,15 +1,9 @@
 package com.tistory.workshop6349.basicbot.worker;
 
 import bwapi.*;
-import bwem.Base;
-import bwem.Mineral;
 import com.tistory.workshop6349.basicbot.BasicBotModule;
 import com.tistory.workshop6349.basicbot.BotUtil;
 import com.tistory.workshop6349.basicbot.CommandUtil;
-
-import javax.tools.Tool;
-import java.util.ArrayList;
-import java.util.HashMap;
 
 public class WorkerManager {
 
@@ -84,7 +78,7 @@ public class WorkerManager {
                 int numAssigned = workerData.getNumAssignedWorkers(unit);
 
                 for (int i = 0; i < (3 - numAssigned); ++i) {
-                    Unit gasWorker = chooseGasWorkerFromMineralWorkers(unit);
+                    Unit gasWorker = chooseWorkerClosestTo(unit);
                     if (gasWorker != null) {
                         workerData.setWorkerJob(gasWorker, WorkerData.WorkerJob.Gas, unit);
                     }
@@ -332,32 +326,6 @@ public class WorkerManager {
         workerData.setWorkerJob(unit, WorkerData.WorkerJob.Idle, (Unit) null);
     }
 
-    public Unit chooseGasWorkerFromMineralWorkers(Unit refinery) {
-        if (refinery == null) {
-            return null;
-        }
-
-        Unit closestWorker = null;
-
-        double closestDistance = 1000000000;
-
-        for (Unit unit : workerData.getWorkers()) {
-            if (unit == null) {
-                continue;
-            }
-
-            if (unit.isCompleted() && workerData.getWorkerJob(unit) == WorkerData.WorkerJob.Minerals) {
-                double distance = unit.getDistance(refinery);
-                if (closestWorker == null || (distance < closestDistance && !unit.isCarryingMinerals() && !unit.isCarryingGas())) {
-                    closestWorker = unit;
-                    closestDistance = distance;
-                }
-            }
-        }
-
-        return closestWorker;
-    }
-
     public void setConstructionWorker(Unit worker, UnitType buildingType) {
         if (worker == null) {
             return;
@@ -449,7 +417,12 @@ public class WorkerManager {
 
 
     // get a worker which will move to a current location
-    public Unit chooseMoveWorkerClosestTo(Position p) {
+
+    public Unit chooseWorkerClosestTo(Unit unit) {
+        return chooseWorkerClosestTo(unit.getPosition());
+    }
+
+    public Unit chooseWorkerClosestTo(Position p) {
         Unit closestWorker = null;
 
         double closestDistance = 1000000000;

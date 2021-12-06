@@ -72,64 +72,80 @@ public class BasicBotModule implements BWEventListener {
             // TODO Common.error(주 전략, 상대 종족, 내 위치, 상대 위치)
         }
         // TODO 현재 상태 계속 보고 (개발단계의 경우: 24프레임(약 1초 ~ 1.2초정도) 마다 보고, 테스트의 경우: 360프레임(약 15초~16.5초) 마다 보고)
+        if (Common.Time() % 360 == 0) {
+            int gatheredMinerals = BroodWar.self().gatheredMinerals();
+            int gatheredGas = BroodWar.self().gatheredGas();
+            int currentMinerals = BroodWar.self().minerals();
+            int currentGas = BroodWar.self().gas();
+
+            int time = Common.Time() / 24;
+            String logMsg = "{log: }" + time + ", " + currentMinerals + ", "
+                    + currentGas + ", " + gatheredMinerals + ", " + gatheredGas;
+            Common.appendTextToFile(mapFileName, logMsg);
+        }
 
         // TODO UXManager.getInstance().update();
     }
 
     public void parseCommand(String cmd) {
-        Player self = BroodWar.self();
         boolean speedChange = false;
 
-        if (cmd.equals("afap") || cmd.equals("vf")) {
-            Config.setLocalSpeed = 0;
-            speedChange = true;
-        }
-        else if (cmd.equals("fast") || cmd.equals("f")) {
-            Config.setLocalSpeed = 24;
-            speedChange = true;
-        }
-        else if (cmd.equals("slow") || cmd.equals("s")) {
-            Config.setLocalSpeed = 42;
-            speedChange = true;
-        }
-        else if (cmd.equals("asap") || cmd.equals("vs")) {
-            Config.setLocalSpeed = 100;
-            speedChange = true;
-        }
-        else if (cmd.equals("+")) {
-            Config.setLocalSpeed /= 2;
-            speedChange = true;
-        }
-        else if (cmd.equals("-")) {
-            Config.setLocalSpeed *= 2;
-            speedChange = true;
-        }
-        else if (cmd.equals("fc")) {
-            Config.drawLastCommandInfo = !Config.drawLastCommandInfo;
-        }
-        else if (cmd.equals("st")) {
-            Config.drawUnitStatus = !Config.drawUnitStatus;
-        }
-        else if (cmd.equals("mu")) {
-            Config.drawMyUnit = !Config.drawMyUnit;
-            if (Config.drawMyUnit) {
-                Config.drawEnemyUnit = false;
-            }
-        }
-        else if (cmd.equals("eu")) {
-            Config.drawEnemyUnit = !Config.drawEnemyUnit;
-            if (Config.drawEnemyUnit) {
-                Config.drawMyUnit = false;
-            }
-        }
-        else if (cmd.equals("end")) {
-            BroodWar.setGUI(false);
-        }
-        else if (cmd.equals("b")) {
-            BroodWar.sendText("black sheep wall");
-        }
-        else if (cmd.equals("show")) {
-            BroodWar.sendText("show me the money");
+        switch (cmd) {
+            case "afap":
+            case "vf":
+                Config.setLocalSpeed = 0;
+                speedChange = true;
+                break;
+            case "fast":
+            case "f":
+                Config.setLocalSpeed = 24;
+                speedChange = true;
+                break;
+            case "slow":
+            case "s":
+                Config.setLocalSpeed = 42;
+                speedChange = true;
+                break;
+            case "asap":
+            case "vs":
+                Config.setLocalSpeed = 100;
+                speedChange = true;
+                break;
+            case "+":
+                Config.setLocalSpeed /= 2;
+                speedChange = true;
+                break;
+            case "-":
+                Config.setLocalSpeed *= 2;
+                speedChange = true;
+                break;
+            case "fc":
+                Config.drawLastCommandInfo = !Config.drawLastCommandInfo;
+                break;
+            case "st":
+                Config.drawUnitStatus = !Config.drawUnitStatus;
+                break;
+            case "mu":
+                Config.drawMyUnit = !Config.drawMyUnit;
+                if (Config.drawMyUnit) {
+                    Config.drawEnemyUnit = false;
+                }
+                break;
+            case "eu":
+                Config.drawEnemyUnit = !Config.drawEnemyUnit;
+                if (Config.drawEnemyUnit) {
+                    Config.drawMyUnit = false;
+                }
+                break;
+            case "end":
+                BroodWar.setGUI(false);
+                break;
+            case "b":
+                BroodWar.sendText("black sheep wall");
+                break;
+            case "show":
+                BroodWar.sendText("show me the money");
+                break;
         }
 
         if (speedChange) {

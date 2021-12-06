@@ -1,6 +1,5 @@
 package com.tistory.workshop6349.basicbot.worker;
 
-import bwapi.Position;
 import bwapi.Unit;
 import bwapi.UnitType;
 import bwem.Base;
@@ -11,11 +10,10 @@ import com.tistory.workshop6349.basicbot.CommandUtil;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class WorkerData {
 
-    private final Map<Integer, Integer> workersOnMineralPatch = new HashMap<>();
+    private final HashMap<Integer, Integer> workersOnMineralPatch = new HashMap<>();
 
     // 일꾼 유닛에게 지정하는 임무 종류
     public enum WorkerJob {
@@ -45,11 +43,8 @@ public class WorkerData {
     private final HashMap<Integer, Unit> workerDepotMap = new HashMap<>();
     private final HashMap<Integer, WorkerMoveData> workerMoveDataMap = new HashMap<>();
     private final HashMap<Integer, Unit> workerMineralAssignment = new HashMap<>();
-    private final HashMap<Integer, Unit> workerMineralMap = new HashMap<>();
     private final HashMap<Integer, Unit> workerRefineryMap = new HashMap<>();
     private final HashMap<Integer, Unit> workerRepairMap = new HashMap<>();
-
-    private final CommandUtil commandUtil = new CommandUtil();
 
     public WorkerData() {
         // 멀티 기지간 일꾼 숫자 리밸런싱 조건값 수정 : 미네랄 갯수 * 2 배 초과일 경우 리밸런싱
@@ -369,8 +364,8 @@ public class WorkerData {
         }
 
         if (getWorkerJob(unit) == WorkerJob.Minerals) {
-            if (workerMineralMap.containsKey(unit.getID())) {
-                return workerMineralMap.get(unit.getID());
+            if (workerMineralAssignment.containsKey(unit.getID())) {
+                return workerMineralAssignment.get(unit.getID());
             }
         }
         else if (getWorkerJob(unit) == WorkerJob.Gas) {

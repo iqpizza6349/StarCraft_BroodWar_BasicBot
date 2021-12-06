@@ -16,12 +16,6 @@ public class Config {
     public static int MAP_GRID_SIZE = 32;
     public static int TILE_SIZE = 32;
 
-    public static String logFilename;
-    public static String timeoutFilename;
-    public static String errorLogFilename;
-    public static String readDirectory = "bwapi-data\\read\\";
-    public static String writeDirectory = "bwapi-data\\write\\";
-
     public static boolean drawGameInfo = true;
     public static boolean drawScoutInfo = true;
     public static boolean drawMouseCursorInfo = true;
