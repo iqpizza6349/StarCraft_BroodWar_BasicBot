@@ -9,112 +9,56 @@ import java.util.concurrent.TimeUnit;
 
 public class Common {
 
-    public static int TIME() {
-        return BasicBotModule.BroodWar.getFrameCount(); // 어차피 계속 쓸 거 같아서 만듬
+    public static Player Self() {
+        return BasicBotModule.BroodWar.self();
     }
 
     public static Player Enemy() {
         return BasicBotModule.BroodWar.enemy();
     }
 
-    public static Player Self() {
-        return BasicBotModule.BroodWar.self();
-    }
-
-
-
-    public static void appendTextToFile(String logFile, String msg) {
+    /// 로그 유틸
+    public static void appendTextToFile(final String logFile, final String msg)
+    {
         try {
-            PrintWriter logWriter = new PrintWriter(new FileWriter(logFile, true));
-            logWriter.println(msg);
-            logWriter.close();
+            BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(logFile, true));
+            bos.write(msg.getBytes());
+            bos.flush();
+            bos.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static void overWriteToFile(String logFile, String msg) {
+    /// 로그 유틸
+    public static void overwriteToFile(final String logFile, final String msg)
+    {
         try {
-            PrintWriter logWriter = new PrintWriter(logFile);
-            logWriter.println(msg);
-            logWriter.close();
+            BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(logFile));
+            bos.write(msg.getBytes());
+            bos.flush();
+            bos.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static void makeDirectory(String fullPath) {
-        if (fullPath == null) {
-            return;
-        }
-
-        File folder = new File(fullPath);
-
-        if (!folder.exists()) {
-            try {
-                folder.mkdir();
-                System.out.println("디렉토리 생성");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        else {
-            System.err.println("이미 디렉토리가 있습니다");
-        }
-    }
-
-    public static String readFile(String fileName) {
-        StringBuilder result = new StringBuilder();
+    /// 파일 유틸 - 텍스트 파일을 읽어들인다
+    public static String readFile(final String filename)
+    {
+        BufferedInputStream bis;
+        StringBuilder sb = new StringBuilder();
         try {
-            BufferedReader reader = new BufferedReader(new FileReader(fileName));
-            while (true) {
-                String line = reader.readLine();
-                if (line == null) {
-                    break;
-                }
-                result.append(line);
-            }
-            reader.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+            bis = new BufferedInputStream(new FileInputStream(filename));
 
-        return result.toString();
-    }
-
-    public static void readResults() {
-        String enemyName = Common.Enemy().getName();
-        enemyName = enemyName.replace(" ", "_");
-
-        String enemyResultsFile = Config.readDirectory + enemyName + ".txt";
-
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(enemyResultsFile));
-            while (true) {
-                String line = reader.readLine();
-                if (line == null) {
-                    break;
-                }
-
+            while (bis.available() > 0) {
+                sb.append((char) bis.read());
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
 
-    public static void writeResults() {
-        String enemyName = Common.Enemy().getName();
-        enemyName = enemyName.replace(" ", "_");
-
-        String enemyResultsFile = Config.readDirectory + enemyName + ".txt";
-
-        String s = "";
-
-//        int wins = 1;
-//        int losses = 0;
-//        s = wins + " " + losses;
-
-        overWriteToFile(enemyResultsFile, s);
+        return sb.toString();
     }
 
     public static String getDateTimeOfNow() {

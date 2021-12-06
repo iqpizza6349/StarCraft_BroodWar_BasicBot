@@ -3,26 +3,25 @@ package com.tistory.workshop6349.basicbot;
 import bwapi.*;
 import bwem.BWEM;
 
-public class BasicBotModule {
+public class BasicBotModule implements BWEventListener {
 
+    private static BWClient bwClient;
     public static Game BroodWar;
-    public static BWEM Map;
+    public static BWEM MAP;
 
-    public GameCommander gameCommander = new GameCommander();
+    private static final GameCommander gameCommander = new GameCommander();
+    private static String mapFileName = "";
 
-    private static String mapFileName;
-
-    public BasicBotModule(Game game, BWEM bwem) {
-        BroodWar = game;
-        Map = bwem;
-
-        Common.makeDirectory(Config.writeDirectory);
-        Config.logFileName = Common.getDateTimeOfNow() + BroodWar.mapFileName() + BroodWar.enemy().getName() + "_LastGameLog.dat";
-        Config.timeOutFileName = "TimeOut_" + Common.getDateTimeOfNow() + BroodWar.mapFileName() + BroodWar.enemy().getName() + ".dat";
-        Config.errorLogFileName = "Error_" + Common.getDateTimeOfNow() + BroodWar.mapFileName() + BroodWar.enemy().getName() + ".dat";
+    public void run() {
+        bwClient = new BWClient(this);
+        bwClient.startGame();
     }
 
+    @Override
     public void onStart() {
+        BroodWar = bwClient.getGame();
+        MAP = new BWEM(BroodWar);
+
         System.out.println("Map File Name: " + BroodWar.mapFileName());
         mapFileName = BroodWar.mapFileName() + "_" + Common.getDateTimeOfNow() + ".csv";
         String header = "SECONDS, REMAINING_MINERAL, REMAINING_GAS, GATHERED_MINERAL, GATHERED_GAS, NUMBER_OF_SCV_OF_FOR_MINERAL, NUMBER_OF_SCV_FOR_GAS\n";
@@ -43,8 +42,8 @@ public class BasicBotModule {
                 System.out.println("The match up is " + BroodWar.self().getRace() + " VS " +  BroodWar.enemy().getRace());
             }
             System.out.println("Map initialization...");
-            Map.initialize();
-            Map.getMap().enableAutomaticPathAnalysis();
+            MAP.initialize();
+            MAP.getMap().enableAutomaticPathAnalysis();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -56,13 +55,15 @@ public class BasicBotModule {
         gameCommander.onStart();
     }
 
+    @Override
     public void onEnd(boolean isWinner) {
-        System.out.println("[ " + BroodWar.getFrameCount() + " ]" + (isWinner ? "won" : "lost") + " the game");
+        System.out.println("[ " + BroodWar.getFrameCount() + " ] " + (isWinner ? "won" : "lost") + " the game");
 
         gameCommander.onEnd(isWinner);
         BroodWar.printf("Game End");
     }
 
+    @Override
     public void onFrame() {
         try {
             gameCommander.onFrame();
@@ -137,6 +138,7 @@ public class BasicBotModule {
         }
     }
 
+    @Override
     public void onSendText(String text) {
         parseCommand(text);
 
@@ -145,65 +147,82 @@ public class BasicBotModule {
         BroodWar.sendText(text);
     }
 
+    @Override
     public void onReceiveText(Player player, String text) {
         gameCommander.onReceiveText(player, text);
     }
 
+    @Override
     public void onPlayerLeft(Player player) {
         gameCommander.onPlayerLeft(player);
     }
 
+    @Override
     public void onNukeDetect(Position target) {
         gameCommander.onNukeDetect(target);
     }
 
+    @Override
     public void onUnitDiscover(Unit unit) {
         gameCommander.onUnitDiscover(unit);
     }
 
+    @Override
     public void onUnitEvade(Unit unit) {
         gameCommander.onUnitEvade(unit);
     }
 
+    @Override
     public void onUnitShow(Unit unit) {
         gameCommander.onUnitShow(unit);
     }
 
+    @Override
     public void onUnitHide(Unit unit) {
         gameCommander.onUnitHide(unit);
     }
 
+    @Override
     public void onUnitCreate(Unit unit) {
         gameCommander.onUnitCreate(unit);
     }
 
+    @Override
     public void onUnitDestroy(Unit unit) {
         gameCommander.onUnitDestroy(unit);
 
         try {
             if (unit.getType().isMineralField()
                     || unit.getType().isSpecialBuilding()) {
-                Map.getMap().onUnitDestroyed(unit);
+                MAP.getMap().onUnitDestroyed(unit);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    @Override
     public void onUnitMorph(Unit unit) {
         gameCommander.onUnitMorph(unit);
     }
 
+    @Override
     public void onUnitRenegade(Unit unit) {
         gameCommander.onUnitRenegade(unit);
     }
 
+    @Override
     public void onSaveGame(String gameName) {
         gameCommander.onSaveGame(gameName);
     }
 
+    @Override
     public void onUnitComplete(Unit unit) {
         gameCommander.onUnitComplete(unit);
     }
 
+    @Override
+    public void onPlayerDropped(Player player) {
+
+    }
 }

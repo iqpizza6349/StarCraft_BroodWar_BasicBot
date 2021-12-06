@@ -108,5 +108,4 @@ public class GameCommander {
 //            TODO ScvManager::Instance ().onUnitLanded(unit);
         }
     }
-
 }
