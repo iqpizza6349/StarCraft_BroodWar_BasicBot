@@ -17,6 +17,10 @@ public class Common {
         return BasicBotModule.BroodWar.enemy();
     }
 
+    public static int Time() {
+        return BasicBotModule.BroodWar.getFrameCount();
+    }
+
     /// 로그 유틸
     public static void appendTextToFile(final String logFile, final String msg)
     {

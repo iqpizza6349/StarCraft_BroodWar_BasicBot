@@ -4,6 +4,7 @@ import bwapi.Player;
 import bwapi.Position;
 import bwapi.TilePosition;
 import bwapi.Unit;
+import com.tistory.workshop6349.basicbot.worker.WorkerManager;
 
 public class GameCommander {
 
@@ -33,6 +34,15 @@ public class GameCommander {
     }
 
     public void onFrame() {
+
+        if (BasicBotModule.BroodWar.isPaused()
+                || BasicBotModule.BroodWar.self() == null || BasicBotModule.BroodWar.self().isDefeated() || BasicBotModule.BroodWar.self().leftGame()
+                || BasicBotModule.BroodWar.enemy() == null || BasicBotModule.BroodWar.enemy().isDefeated() || BasicBotModule.BroodWar.enemy().leftGame())
+        {
+            return;
+        }
+
+        WorkerManager.getInstance().update();
 
     }
 
@@ -73,11 +83,11 @@ public class GameCommander {
     }
 
     public void onUnitDestroy(Unit unit) {
-
+        WorkerManager.getInstance().onWorkerDestroy(unit);
     }
 
     public void onUnitMorph(Unit unit) {
-
+        WorkerManager.getInstance().onWorkerMorph(unit);
     }
 
     public void onUnitRenegade(Unit unit) {
@@ -89,7 +99,7 @@ public class GameCommander {
     }
 
     public void onUnitComplete(Unit unit) {
-
+        WorkerManager.getInstance().onWorkerComplete(unit);
     }
 
     public void onPlayerDropped(Player player) {
