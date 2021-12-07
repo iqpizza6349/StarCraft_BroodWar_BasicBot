@@ -1,6 +1,7 @@
-package com.tistory.workshop6349.basicbot;
+package com.tistory.workshop6349.basicbot.util;
 
 import bwapi.TilePosition;
+import com.tistory.workshop6349.basicbot.BasicBotModule;
 
 public class BotUtil {
 

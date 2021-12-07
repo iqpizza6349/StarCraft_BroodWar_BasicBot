@@ -1,6 +1,7 @@
-package com.tistory.workshop6349.basicbot;
+package com.tistory.workshop6349.basicbot.config;
 
 import bwapi.Player;
+import com.tistory.workshop6349.basicbot.BasicBotModule;
 
 import java.io.*;
 import java.time.LocalDate;

@@ -2,6 +2,8 @@ package com.tistory.workshop6349.basicbot;
 
 import bwapi.*;
 import bwem.BWEM;
+import com.tistory.workshop6349.basicbot.config.Common;
+import com.tistory.workshop6349.basicbot.config.Config;
 
 public class BasicBotModule implements BWEventListener {
 

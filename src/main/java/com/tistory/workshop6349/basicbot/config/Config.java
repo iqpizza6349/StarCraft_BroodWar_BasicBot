@@ -1,4 +1,4 @@
-package com.tistory.workshop6349.basicbot;
+package com.tistory.workshop6349.basicbot.config;
 
 public class Config {
 

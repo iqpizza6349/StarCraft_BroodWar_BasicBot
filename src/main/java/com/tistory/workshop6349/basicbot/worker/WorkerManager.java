@@ -2,7 +2,7 @@ package com.tistory.workshop6349.basicbot.worker;
 
 import bwapi.*;
 import com.tistory.workshop6349.basicbot.BasicBotModule;
-import com.tistory.workshop6349.basicbot.BotUtil;
+import com.tistory.workshop6349.basicbot.util.BotUtil;
 import com.tistory.workshop6349.basicbot.CommandUtil;
 
 public class WorkerManager {
