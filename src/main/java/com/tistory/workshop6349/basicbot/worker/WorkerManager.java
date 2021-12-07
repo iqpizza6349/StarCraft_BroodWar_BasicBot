@@ -473,8 +473,6 @@ public class WorkerManager {
 
         if (closestWorker != null) {
             workerData.setWorkerJob(closestWorker, WorkerData.WorkerJob.Move, new WorkerMoveData(mineralsNeeded, gasNeeded, p));
-        } else {
-            // 에러
         }
     }
 
