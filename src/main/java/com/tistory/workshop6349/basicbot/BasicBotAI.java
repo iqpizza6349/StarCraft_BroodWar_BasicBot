@@ -27,6 +27,7 @@ public class BasicBotAI implements BWEventListener {
         //////////////////Config//////////////////
         BroodWar.setFrameSkip(Config.FrameSkip);
         BroodWar.setLocalSpeed(Config.LocalSpeed);
+        BroodWar.setCommandOptimizationLevel(2);
 
         if (Config.EnableInput) {
             BroodWar.enableFlag(Flag.UserInput);
@@ -34,6 +35,14 @@ public class BasicBotAI implements BWEventListener {
         Config.ShowVisibilityData = false;
         //////////////////Config//////////////////
 
+        //////////////////StateManager//////////////////
+        StateManager.getInstance().test_strategy = 0;       // zero for no testing
+        StateManager.getInstance().avoidWeakStrategies = true;
+        StateManager.getInstance().useHardcodedStrategies = true;
+        StateManager.getInstance().strategy = s
+
+
+        //////////////////StateManager//////////////////
     }
 
     @Override
