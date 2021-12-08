@@ -3,8 +3,6 @@ package com.tistory.workshop6349.basicbot;
 import bwapi.*;
 import bwem.BWEM;
 
-import java.util.List;
-
 public class BasicBotAI implements BWEventListener {
 
     private BWClient bwClient;
