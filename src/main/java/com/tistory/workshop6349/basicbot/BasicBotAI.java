@@ -3,6 +3,8 @@ package com.tistory.workshop6349.basicbot;
 import bwapi.*;
 import bwem.BWEM;
 
+import java.io.IOException;
+
 public class BasicBotAI implements BWEventListener {
 
     private BWClient bwClient;
@@ -39,15 +41,29 @@ public class BasicBotAI implements BWEventListener {
         StateManager.getInstance().test_strategy = 0;       // zero for no testing
         StateManager.getInstance().avoidWeakStrategies = true;
         StateManager.getInstance().useHardcodedStrategies = true;
-        StateManager.getInstance().strategy = s
+        try {
+            StateManager.getInstance().strategy = Learner.chooseStrategy();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        StateManager.getInstance().orig_strategy = StateManager.getInstance().strategy;
 
-
+        StateManager.getInstance().is_vs_human = false;
+        StateManager.getInstance().umsToPracticeMicro = true;
         //////////////////StateManager//////////////////
+
+
     }
 
     @Override
     public void onEnd(boolean isWinner) {
-        BroodWar.sendText("I " + (isWinner ? "won": "lost") + " the game");
+        Learner.addResultToHistory(isWinner);
+        BroodWar.sendText("gg");
+        try {
+            System.out.println(ReadWrite.writeLogfile(EnemyManager.getInstance().history, EnemyManager.getInstance().name));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         System.out.println("I " + (isWinner ? "won": "lost") + " the game");
     }
 

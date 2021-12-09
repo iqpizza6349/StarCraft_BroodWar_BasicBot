@@ -3,7 +3,6 @@ package com.tistory.workshop6349.basicbot;
 import bwapi.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class EnemyManager {
