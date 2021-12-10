@@ -6,10 +6,10 @@ import java.util.HashMap;
 
 public class UnitPriorities {
 
-    public HashMap<UnitType, Integer> structures = new HashMap<>();
+    public HashMap<UnitType, Integer> structures;
 
     public void onStart() {
-        structures.clear();
+        structures = new HashMap<>();
 
         for (UnitType t : UnitType.values()) {
             structures.put(t, 1);

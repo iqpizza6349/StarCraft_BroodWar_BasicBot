@@ -7,11 +7,6 @@ import java.util.ArrayList;
 
 public class BaseInfo {
 
-//    private static final BaseInfo BASE_INFO = new BaseInfo();
-//    public static BaseInfo getInstance() {
-//        return BASE_INFO;
-//    }
-
     public ArrayList<Unit> mineralsWorkers;
     public ArrayList<Unit> gasWorkers;
     public ArrayList<Unit> minerals;
@@ -42,11 +37,4 @@ public class BaseInfo {
         this.loc = Position.Unknown;
     }
 
-    public boolean hasDepot() {
-        return false;
-    }
-
-    public void update() {
-
-    }
 }

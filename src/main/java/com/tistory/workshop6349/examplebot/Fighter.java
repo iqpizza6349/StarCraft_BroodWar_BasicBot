@@ -1,8 +1,6 @@
 package com.tistory.workshop6349.examplebot;
 
 import bwapi.Color;
-import bwapi.Position;
-import bwapi.Unit;
 import bwapi.UnitType;
 
 import java.util.HashMap;
@@ -33,30 +31,6 @@ public class Fighter {
         }
     }
 
-    public Unit getTarget(UnitInfo unitInfo) {
-        return null;
-    }
-
-    public Unit getTarget(Squad squad) {
-        return null;
-    }
-
-    public Position getTargetPos(UnitInfo unitInfo) {
-        return Position.Invalid;
-    }
-
-    public Position getTargetPos(Squad squad) {
-        return Position.Invalid;
-    }
-
-    public Position getTargetFar(UnitInfo unitInfo) {
-        return Position.Invalid;
-    }
-
-    public Position getTargetFar(Squad squad) {
-        return Position.Invalid;
-    }
-
     public Squad getSquad(UnitInfo unitInfo) {
         for (Map.Entry<UnitType, Squad> s : squads.entrySet()) {
             if (s.getKey() == unitInfo.unitType) {
@@ -66,16 +40,15 @@ public class Fighter {
         return null;
     }
 
-    public boolean assignedSquad(UnitInfo unitInfo) {
+    public void assignedSquad(UnitInfo unitInfo) {
         Squad squad = getSquad(unitInfo);
 
         if (squad != null) {
             squad.addToSquad(unitInfo);
-            return true;
+            return;
         }
 
         squads.put(unitInfo.unitType, new Squad(unitInfo));
-        return false;
     }
 
     public void onUnitDestroy(UnitInfo unitInfo) {
