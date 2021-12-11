@@ -25,14 +25,13 @@ public class Squad {
         units.add(units.size(), u);
     }
 
-    public boolean removeFromSquad(UnitInfo u) {
+    public void removeFromSquad(UnitInfo u) {
         for (UnitInfo ui : units) {
             if (u == ui) {
                 units.remove(ui);
-                return true;
+                return;
             }
         }
-        return false;
     }
 
 }
