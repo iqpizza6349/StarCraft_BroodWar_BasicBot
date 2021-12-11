@@ -1,9 +1,6 @@
 package com.tistory.workshop6349.examplebot;
 
-import bwapi.Player;
-import bwapi.Position;
-import bwapi.Unit;
-import bwapi.UnitType;
+import bwapi.*;
 
 public class UnitInfo {
 
