@@ -1,4 +1,4 @@
-package com.tistory.workshop6349.examplebot;
+package com.tistory.workshop6349.examplebotZ;
 
 import bwapi.Position;
 import bwapi.Unit;
