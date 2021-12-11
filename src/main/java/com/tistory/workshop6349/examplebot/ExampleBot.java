@@ -13,50 +13,39 @@ public class ExampleBot extends DefaultBWListener {
 
     //////////////////Variables//////////////////
 
-    public final UnitType drone = UnitType.Zerg_Drone;
-    public final UnitType hatch = UnitType.Zerg_Hatchery;
-    public final UnitType supply = UnitType.Zerg_Overlord;
-    public final UnitType soldier = UnitType.Zerg_Zergling;
-    public final UnitType producer = UnitType.Zerg_Spawning_Pool;
+    public static final UnitType drone = UnitType.Zerg_Drone;
+    public static final UnitType hatch = UnitType.Zerg_Hatchery;
+    public static final UnitType supply = UnitType.Zerg_Overlord;
+    public static final UnitType soldier = UnitType.Zerg_Zergling;
+    public static final UnitType producer = UnitType.Zerg_Spawning_Pool;
 
-    public HashMap<Integer, BaseInfo> baseList = new HashMap<>();
+    public static HashMap<Integer, BaseInfo> baseList = new HashMap<>();
 
-    private BaseInfo spawnBase;
-    private int minWorkersDesired;
-    private int totalMinWorkers;
-    private int gasWorkersDesired;
-    private int totalGasWorkers;
+    private static BaseInfo spawnBase;
+    private static int minWorkersDesired;
+    private static int totalMinWorkers;
 
-    private int desHatch;
-    private int curHatch;
-    private boolean hasPool;
-    private boolean startPool, startHatch;
-    private boolean addingProduction;
-    private int prodDrones;
-    private int prodLings;
-    private int allLings;
-    private  int prodSupply;
-    private boolean found;
+    private static int desHatch;
+    private static int curHatch;
+    private static boolean hasPool;
+    private static boolean startPool, startHatch;
+    private static boolean addingProduction;
+    private static int prodDrones;
+    private static int prodSupply;
+    private static boolean found;
 
-    private final ArrayList<UnitInfo> zerglings = new ArrayList<>();
-    private final ArrayList<UnitInfo> hydralisks = new ArrayList<>();
-    private final ArrayList<UnitInfo> mutalisks = new ArrayList<>();
-    private final ArrayList<UnitInfo> lurkers = new ArrayList<>();
+    private static final ArrayList<UnitInfo> zerglings = new ArrayList<>();
 
-    private TilePosition buildPool, buildHatch;
+    private static TilePosition buildPool, buildHatch;
 
-    private final HashMap<UnitType, ArrayList<Integer>> buildOrder = new HashMap<>();
-    private final HashMap<UnitType, Boolean> unitTypes = new HashMap<>();
+    private static final ArrayList<Unit> availableScouts = new ArrayList<>();
 
-    private final ArrayList<Unit> availableScouts = new ArrayList<>();
-
-    private int possible;
-    private Position mainEnemyBase;
-    private final ArrayList<UnitInfo> friendlyUnits = new ArrayList<>();
-    private final ArrayList<UnitInfo> neutralUnits = new ArrayList<>();
-    private final ArrayList<UnitInfo> enemyUnits = new ArrayList<>();
-    private final ArrayList<PlayerInfo> players = new ArrayList<>();
-    private final Fighter fighter = new Fighter();
+    private static int possible;
+    private static Position mainEnemyBase;
+    private static final ArrayList<UnitInfo> friendlyUnits = new ArrayList<>();
+    private static final ArrayList<UnitInfo> neutralUnits = new ArrayList<>();
+    private static final ArrayList<UnitInfo> enemyUnits = new ArrayList<>();
+    private static final Fighter fighter = new Fighter();
     //////////////////Variables//////////////////
 
 
@@ -70,12 +59,6 @@ public class ExampleBot extends DefaultBWListener {
         BroodWar = bwClient.getGame();
 
         fighter.onStart();
-        players.clear();
-        for (Player p : BroodWar.enemies()) {
-            if (p != null) {
-                players.add(new PlayerInfo(p));
-            }
-        }
 
         BroodWar.setFrameSkip(0);
         BroodWar.setLocalSpeed(10);
@@ -83,20 +66,14 @@ public class ExampleBot extends DefaultBWListener {
         found = false;
         possible = 0;
         zerglings.clear();
-        hydralisks.clear();
-        mutalisks.clear();
         minWorkersDesired = 9;
-        gasWorkersDesired = 4;
         totalMinWorkers = 0;
-        totalGasWorkers = 0;
 
         baseList.clear();
         hasPool = false;
         desHatch = 1;
         curHatch = 1;
         prodDrones = 4;
-        prodLings = 0;
-        allLings = 0;
 
         addingProduction = false;
         startPool = false;
@@ -107,7 +84,7 @@ public class ExampleBot extends DefaultBWListener {
         neutralUnits.clear();
         friendlyUnits.clear();
 
-        for (int i = 0; i < 32767; i++) {
+        for (int i = 0; i < 251; i++) {
             baseList.put(i, new BaseInfo(false, false, false, false, null));
         }
 
@@ -159,8 +136,10 @@ public class ExampleBot extends DefaultBWListener {
         fighter.drawInfo();
 
         for (Unit u : BroodWar.getAllUnits()) {
-            UnitInfo ui = new UnitInfo(u);
-            ui = createUnitInfo(u);
+            UnitInfo ui = getInfo(u);
+            if (ui == null) {
+                ui = createUnitInfo(u);
+            }
             ui.update();
         }
 
@@ -171,6 +150,7 @@ public class ExampleBot extends DefaultBWListener {
                     removePossibleEnemyLocation(u.unit.getTargetPosition());
                 }
             }
+
             processAttack(u.unit);
         }
 
@@ -218,8 +198,8 @@ public class ExampleBot extends DefaultBWListener {
                 if (!hasPool) {
                     if ((getNumOfUnitType(drone) + prodDrones) < 9 && BroodWar.self().minerals() >= 50) {
                         u.train(drone);
-                        break;
-                    } else {
+                    }
+                    else {
                         if (!startPool) {
                             buildPool = BroodWar.getBuildLocation(producer, spawnBase.mineralsWorkers.get(0).getTilePosition(), 64, true);
                             startPool = true;
@@ -227,8 +207,8 @@ public class ExampleBot extends DefaultBWListener {
                         if (BroodWar.self().minerals() >= 200) {
                             spawnBase.mineralsWorkers.get(0).build(producer, buildPool);
                         }
-                        break;
                     }
+                    break;
                 }
 
                 // supply
@@ -305,9 +285,6 @@ public class ExampleBot extends DefaultBWListener {
         else if (unit.getBuildType() == drone) {
             prodDrones++;
         }
-        else if (unit.getBuildType() == soldier) {
-            prodLings += 2;
-        }
 
         if (unit.getBuildType().isBuilding() && unit.getBuildType() != hatch) {
             removeWorker(unit);
@@ -320,8 +297,10 @@ public class ExampleBot extends DefaultBWListener {
             return;
         }
 
-        UnitInfo ui = new UnitInfo(unit);
-        ui = createUnitInfo(unit);
+        UnitInfo ui = getInfo(unit);
+        if (ui == null) {
+            ui = createUnitInfo(unit);
+        }
         if (unit.getType().isWorker()) {
             prodDrones--;
             Unit m = BroodWar.getClosestUnit(unit.getPosition(), UnitFilter.IsMineralField);
@@ -363,8 +342,6 @@ public class ExampleBot extends DefaultBWListener {
         else if (unit.getType() == soldier) {
             zerglings.add(ui);
             fighter.assignedSquad(ui);
-            allLings++;
-            prodLings--;
         }
 
         if (unit.getType() == supply) {
@@ -389,7 +366,6 @@ public class ExampleBot extends DefaultBWListener {
             else if (BroodWar.self().supplyTotal() >= 90) {
                 desHatch = 7;
                 minWorkersDesired = 32;
-                gasWorkersDesired = 16;
             }
             else if (BroodWar.self().supplyTotal() >= 75) {
                 desHatch = 6;
@@ -397,7 +373,6 @@ public class ExampleBot extends DefaultBWListener {
             else if (BroodWar.self().supplyTotal() >= 60) {
                 desHatch = 5;
                 minWorkersDesired = 24;
-                gasWorkersDesired = 12;
             }
             else if (BroodWar.self().supplyTotal() >= 50) {
                 desHatch = 4;
@@ -405,7 +380,6 @@ public class ExampleBot extends DefaultBWListener {
             else if (BroodWar.self().supplyTotal() >= 40) {
                 desHatch = 3;
                 minWorkersDesired = 16;
-                gasWorkersDesired = 8;
             }
             else if (BroodWar.self().supplyTotal() >= 25) {
                 desHatch = 2;
@@ -413,7 +387,6 @@ public class ExampleBot extends DefaultBWListener {
             else {
                 desHatch = 1;
                 minWorkersDesired = 9;
-                gasWorkersDesired = 4;
             }
         }
     }
@@ -436,7 +409,6 @@ public class ExampleBot extends DefaultBWListener {
             }
         }
         else if (unit.getType() == soldier) {
-            allLings--;
             removeFromList(ui);
         }
         else if (unit.getType().isWorker()) {
@@ -471,21 +443,18 @@ public class ExampleBot extends DefaultBWListener {
             }
             else if (BroodWar.self().supplyTotal() >= 90) {
                 minWorkersDesired = 32;
-                gasWorkersDesired = 16;
             }
             else if (BroodWar.self().supplyTotal() >= 75) {
                 desHatch = 4;
             }
             else if (BroodWar.self().supplyTotal() >= 60) {
                 minWorkersDesired = 24;
-                gasWorkersDesired = 12;
             }
             else if (BroodWar.self().supplyTotal() >= 50) {
                 desHatch = 3;
             }
             else if (BroodWar.self().supplyTotal() >= 40) {
                 minWorkersDesired = 16;
-                gasWorkersDesired = 8;
             }
             else if (BroodWar.self().supplyTotal() >= 25) {
                 desHatch = 2;
@@ -493,7 +462,6 @@ public class ExampleBot extends DefaultBWListener {
             else {
                 desHatch = 1;
                 minWorkersDesired = 8;
-                gasWorkersDesired = 4;
             }
             for (Unit s : availableScouts) {
                 if (s == unit) {
@@ -513,9 +481,7 @@ public class ExampleBot extends DefaultBWListener {
         if (ui == null) {
             ui = createUnitInfo(unit);
         }
-        else {
-            ui.update();
-        }
+        ui.update();
 
         if (unit.getPlayer() == BroodWar.self()) {
             return;
@@ -525,7 +491,7 @@ public class ExampleBot extends DefaultBWListener {
             if (m != null) {
                 BaseInfo b = findAssignedBase(m, false);
                 for (BaseInfo a : baseList.values()) {
-                    b.possible = false;
+                    a.possible = false; // TODO If has a problem -> change to b.possible;
                 }
                 b.possible = true;
                 if (!found) {
@@ -549,7 +515,7 @@ public class ExampleBot extends DefaultBWListener {
 
         Unit u = BroodWar.getClosestUnit(unit.getPosition(), UnitFilter.IsMineralField);
         if (u == null) {
-            u = BroodWar.getClosestUnit(unit.getPosition(), UnitFilter.IsBuilding);
+            u = getClosestUnit(unit, UnitFilter.IsBuilding);
         }
         if (u == null) {
             u = BroodWar.getClosestUnit(unit.getPosition());
@@ -610,33 +576,22 @@ public class ExampleBot extends DefaultBWListener {
         return i;
     }
 
-    public int getNumOfOwnedBases() {
-        int i = 0;
-        for (Map.Entry<Integer, BaseInfo> base : baseList.entrySet()) {
-            if (base.getValue().owned) {
-                i++;
-            }
-        }
-        return i;
-    }
-
-    public boolean removeWorker(Unit unit) {
+    public void removeWorker(Unit unit) {
         for (Map.Entry<Integer, BaseInfo> base : baseList.entrySet()) {
             for (Unit u : base.getValue().mineralsWorkers) {
                 if (u == unit) {
                     base.getValue().mineralsWorkers.remove(u);
                     totalMinWorkers--;
-                    return true;
+                    return;
                 }
             }
             for (Unit u : base.getValue().gasWorkers) {
                 if (u == unit) {
                     base.getValue().gasWorkers.remove(u);
-                    return true;
+                    return;
                 }
             }
         }
-        return false;
     }
 
     public void removePossibleEnemyLocation(Position pos) {
@@ -652,7 +607,7 @@ public class ExampleBot extends DefaultBWListener {
                 mainEnemyBase = getFinalPosition();
             }
             if (b.scout != null) {
-                Unit u = BroodWar.getClosestUnit(b.scout.getPosition(), UnitFilter.IsBuilding);
+                Unit u = getClosestUnit(b.scout, UnitFilter.IsBuilding);
                 if (u != null) {
                     b.scout.move(u.getPosition());
                 }
@@ -665,14 +620,13 @@ public class ExampleBot extends DefaultBWListener {
         }
     }
 
-    public boolean removeFromAvailable(Unit s) {
+    public void removeFromAvailable(Unit s) {
         for (Unit unit : availableScouts) {
             if (unit.getID() == s.getID()) {
                 availableScouts.remove(unit);
-                return true;
+                return;
             }
         }
-        return false;
     }
 
     public Position getFinalPosition() {
@@ -685,18 +639,39 @@ public class ExampleBot extends DefaultBWListener {
         return Position.None;
     }
 
-    public boolean checkBaseForEnemy(Unit u) {
-        boolean success = false;
-        Position pos = u.getTargetPosition();
+    public void checkBaseForEnemy(Unit u) {
         if (u.getPosition().getDistance(u.getTargetPosition()) <= supply.sightRange()) {
-            Unit possible = getClosestEnemy(u, supply.sightRange());
+            Unit possible = getClosestEnemy(u, supply.sightRange(), UnitFilter.IsBuilding);
             if (possible == null) {
                 removePossibleEnemyLocation(u.getTargetPosition());
-                success = true;
             }
         }
+    }
 
-        return success;
+    public Unit getClosestUnit(Unit unit, UnitFilter unitFilter) {
+        return getClosestUnit(unit, 9999, unitFilter);
+    }
+
+    public Unit getClosestUnit(Unit unit, int r, UnitFilter unitFilter) {
+        if (unit == null) {
+            return null;
+        }
+
+        Unit nearestUnit = null;
+        double minDist = Double.MAX_VALUE;
+        for (Unit u : unit.getUnitsInRadius(r, unitFilter)) {
+            if (!u.getPlayer().equals(BroodWar.self())) {
+                continue;
+            }
+
+            double dist = unit.getDistance(u);
+
+            if (dist < minDist) {
+                minDist = dist;
+                nearestUnit = u;
+            }
+        }
+        return nearestUnit;
     }
 
     public Unit getClosestEnemy(Unit unit, int r) {
@@ -706,11 +681,32 @@ public class ExampleBot extends DefaultBWListener {
 
         Unit nearestEnemy = null;
         double minDist = Double.MAX_VALUE;
-        for (Unit enemy : unit.getUnitsInRadius(r, UnitFilter.IsBuilding)) {
-            if (unit.getPlayer() == BroodWar.self()) {
+        for (Unit enemy : unit.getUnitsInRadius(r)) {
+            if (unit.getPlayer() != BroodWar.enemy()) {
                 continue;
             }
 
+            double dist = unit.getDistance(enemy);
+
+            if (dist < minDist) {
+                minDist = dist;
+                nearestEnemy = enemy;
+            }
+        }
+        return nearestEnemy;
+    }
+
+    public Unit getClosestEnemy(Unit unit, int r, UnitFilter unitFilter) {
+        if (unit == null) {
+            return null;
+        }
+
+        Unit nearestEnemy = null;
+        double minDist = Double.MAX_VALUE;
+        for (Unit enemy : unit.getUnitsInRadius(r, unitFilter)) {
+            if (unit.getPlayer() != BroodWar.enemy()) {
+                continue;
+            }
 
             double dist = unit.getDistance(enemy);
 
@@ -726,15 +722,6 @@ public class ExampleBot extends DefaultBWListener {
         if (unit.isAttackFrame() || unit.getTarget() != null) {
             return;
         }
-        if (unit.getHitPoints() < 12) {
-            Unit t = BroodWar.getClosestUnit(unit.getPosition(), UnitFilter.IsBuilding);
-            if (t != null) {
-                unit.move(t.getPosition());
-            }
-            else {
-                unit.move(BroodWar.self().getStartLocation().toPosition());
-            }
-        }
         if (unit.isMoving() && unit.getTarget() == null) {
             Unit t = getClosestEnemy(unit, 9999);
             if (t != null && unit.canAttackUnit(t)) {
@@ -743,7 +730,7 @@ public class ExampleBot extends DefaultBWListener {
             }
         }
         if (unit.getTarget() != null && unit.getTarget().getType().isBuilding()) {
-            Unit t = getClosestEnemy(unit, 9999);
+            Unit t = getClosestEnemy(unit, 9999, UnitFilter.IsBuilding);
             if (t != null && unit.canAttack(t)) {
                 if (!t.getType().isWorker()) {
                     unit.attack(t.getPosition());
@@ -755,15 +742,20 @@ public class ExampleBot extends DefaultBWListener {
         }
         if (unit.isIdle()) {
             Unit t = getClosestEnemy(unit, 9999);
-            if (t != null && t.getDistance(unit) >= 64 && unit.canAttack(t)) {
+            if (t != null && t.getDistance(unit) >= 160 && unit.canAttack(t)) {
                 if (t.getType().isBuilding()) {
                     unit.attack(t.getPosition());
                 }
             }
             else {
-                for (BaseInfo b : baseList.values()) {
-                    if (b.possible) {
-                        unit.attack(b.loc);
+                if (mainEnemyBase != null) {
+                    unit.attack(mainEnemyBase);
+                }
+                else {
+                    for (BaseInfo b : baseList.values()) {
+                        if (b.possible) {
+                            unit.attack(b.loc);
+                        }
                     }
                 }
             }
@@ -771,17 +763,33 @@ public class ExampleBot extends DefaultBWListener {
     }
 
     public UnitInfo getInfo(Unit unit) {
+        if (unit == null) {
+            return null;
+        }
+
         for (UnitInfo ui : friendlyUnits) {
+            if (ui.unit == null) {
+                continue;
+            }
+
             if (ui.unit.getID() == unit.getID()) {
                 return ui;
             }
         }
         for (UnitInfo ui : neutralUnits) {
+            if (ui.unit == null) {
+                continue;
+            }
+
             if (ui.unit.getID() == unit.getID()) {
                 return ui;
             }
         }
         for (UnitInfo ui : enemyUnits) {
+            if (ui.unit == null) {
+                continue;
+            }
+
             if (ui.unit.getID() == unit.getID()) {
                 return ui;
             }
@@ -789,46 +797,25 @@ public class ExampleBot extends DefaultBWListener {
         return null;
     }
 
-    public PlayerInfo getInfo(Player p) {
-        for (PlayerInfo pi : players) {
-            if (pi.player == p) {
-                return pi;
-            }
-        }
-        return null;
-    }
-
-    public BaseInfo getInfo(Position p) {
-        for (BaseInfo b : baseList.values()) {
-            if (b.loc.equals(p)) {
-                return b;
-            }
-        }
-        return null;
-    }
-
-    public boolean removeFromList(UnitInfo unitInfo) {
+    public void removeFromList(UnitInfo unitInfo) {
         for (UnitInfo ui : friendlyUnits) {
             if (ui == unitInfo) {
                 friendlyUnits.remove(ui);
-                // unitInfo = null;
-                return true;
+                return;
             }
         }
 
         for (UnitInfo ui : neutralUnits) {
             if (ui == unitInfo) {
                 neutralUnits.remove(ui);
-                // unitInfo = null;
-                return true;
+                return;
             }
         }
 
         for (UnitInfo ui : enemyUnits) {
             if (ui == unitInfo) {
                 enemyUnits.remove(ui);
-                // unitInfo = null;
-                return true;
+                return;
             }
         }
 
@@ -836,12 +823,11 @@ public class ExampleBot extends DefaultBWListener {
             if (ui == unitInfo) {
                 zerglings.remove(ui);
                 // unitInfo = null;
-                return true;
+                return;
             }
         }
 
         BroodWar.printf("ERROR with remove from list (UnitInfo)");
-        return false;
     }
 
     public UnitInfo createUnitInfo(Unit unit) {
