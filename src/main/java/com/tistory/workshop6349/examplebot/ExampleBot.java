@@ -84,7 +84,7 @@ public class ExampleBot extends DefaultBWListener {
         neutralUnits.clear();
         friendlyUnits.clear();
 
-        for (int i = 0; i < 255; i++) {
+        for (int i = 0; i < 251; i++) {
             baseList.put(i, new BaseInfo(false, false, false, false, null));
         }
 
@@ -682,7 +682,7 @@ public class ExampleBot extends DefaultBWListener {
         Unit nearestEnemy = null;
         double minDist = Double.MAX_VALUE;
         for (Unit enemy : unit.getUnitsInRadius(r)) {
-            if (unit.getPlayer() == BroodWar.self()) {
+            if (unit.getPlayer() != BroodWar.enemy()) {
                 continue;
             }
 
@@ -704,7 +704,7 @@ public class ExampleBot extends DefaultBWListener {
         Unit nearestEnemy = null;
         double minDist = Double.MAX_VALUE;
         for (Unit enemy : unit.getUnitsInRadius(r, unitFilter)) {
-            if (unit.getPlayer() == BroodWar.self()) {
+            if (unit.getPlayer() != BroodWar.enemy()) {
                 continue;
             }
 
@@ -742,7 +742,7 @@ public class ExampleBot extends DefaultBWListener {
         }
         if (unit.isIdle()) {
             Unit t = getClosestEnemy(unit, 9999);
-            if (t != null && t.getDistance(unit) >= 64 && unit.canAttack(t)) {
+            if (t != null && t.getDistance(unit) >= 160 && unit.canAttack(t)) {
                 if (t.getType().isBuilding()) {
                     unit.attack(t.getPosition());
                 }
@@ -768,16 +768,28 @@ public class ExampleBot extends DefaultBWListener {
         }
 
         for (UnitInfo ui : friendlyUnits) {
+            if (ui.unit == null) {
+                continue;
+            }
+
             if (ui.unit.getID() == unit.getID()) {
                 return ui;
             }
         }
         for (UnitInfo ui : neutralUnits) {
+            if (ui.unit == null) {
+                continue;
+            }
+
             if (ui.unit.getID() == unit.getID()) {
                 return ui;
             }
         }
         for (UnitInfo ui : enemyUnits) {
+            if (ui.unit == null) {
+                continue;
+            }
+
             if (ui.unit.getID() == unit.getID()) {
                 return ui;
             }
@@ -789,7 +801,6 @@ public class ExampleBot extends DefaultBWListener {
         for (UnitInfo ui : friendlyUnits) {
             if (ui == unitInfo) {
                 friendlyUnits.remove(ui);
-                // unitInfo = null;
                 return;
             }
         }
@@ -797,7 +808,6 @@ public class ExampleBot extends DefaultBWListener {
         for (UnitInfo ui : neutralUnits) {
             if (ui == unitInfo) {
                 neutralUnits.remove(ui);
-                // unitInfo = null;
                 return;
             }
         }
@@ -805,7 +815,6 @@ public class ExampleBot extends DefaultBWListener {
         for (UnitInfo ui : enemyUnits) {
             if (ui == unitInfo) {
                 enemyUnits.remove(ui);
-                // unitInfo = null;
                 return;
             }
         }
