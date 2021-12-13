@@ -1,6 +1,8 @@
 package com.tistory.workshop6349.examplebotT;
 
 import bwapi.*;
+import bwem.BWEM;
+import bwem.BWMap;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,10 +11,13 @@ public class ExampleBot extends DefaultBWListener {
 
     private BWClient bwClient;
     public static Game BroodWar;
+    public static BWMap map;
 
     public static final ArrayList<Worker> WORKERS = new ArrayList<>();
     public static int wantWorkers = 16;
     public static final HashMap<UnitType, Worker> builders = new HashMap<>();
+
+    public static Position enemyBase = Position.Unknown;
 
     public void run() {
         bwClient = new BWClient(this);
@@ -22,6 +27,10 @@ public class ExampleBot extends DefaultBWListener {
     @Override
     public void onStart() {
         BroodWar = bwClient.getGame();
+        BWEM bwem = new BWEM(BroodWar);
+        bwem.initialize();
+        map = bwem.getMap();
+        map.enableAutomaticPathAnalysis();
         BroodWar.setFrameSkip(0);
         BroodWar.setLocalSpeed(10);
 
@@ -56,6 +65,7 @@ public class ExampleBot extends DefaultBWListener {
 
         trainWorkers();
         checkBuilder();
+        scoutWorker();
     }
 
     @Override
@@ -201,5 +211,42 @@ public class ExampleBot extends DefaultBWListener {
             }
         }
     }
+
+    public void scoutWorker() {
+        // 보급고 건설 시작과 동시에 바로 정찰 지정해서 정찰함
+
+        boolean availableToScout = false;
+        for (Unit u : BroodWar.self().getUnits()) {
+            if (u.getType().isBuilding() && u.getType() != BroodWar.self().getRace().getResourceDepot()) {
+                availableToScout = true;
+                break;
+            }
+        }
+
+        if (!availableToScout) {
+            return;
+        }
+
+        if (Worker.scoutWorker != null) {
+            return;
+        }
+
+        if (enemyBase != Position.Unknown) {
+            return;
+        }
+
+        for (Worker worker : WORKERS) {
+            if (builders.containsValue(worker)) {
+                continue;
+            }
+
+            worker.setScoutWorker();
+            System.out.println("정찰 유닛 지정함: " + Worker.scoutWorker.getID());
+            break;
+        }
+    }
+
+
+
 
 }

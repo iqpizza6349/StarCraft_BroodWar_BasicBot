@@ -1,11 +1,10 @@
 package com.tistory.workshop6349.examplebotT;
 
-import bwapi.TilePosition;
-import bwapi.Unit;
-import bwapi.UnitType;
+import bwapi.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class Worker {
 
@@ -14,9 +13,11 @@ public class Worker {
         Gas,
         Construction,
         Idle,
+        Scout
     }
 
     public static final HashMap<Jobs, ArrayList<Unit>> workerJobs = new HashMap<>();
+    public static Unit scoutWorker;
 
     public Unit unit;
     public UnitType buildingsType;
@@ -28,6 +29,7 @@ public class Worker {
     }
 
     public void update() {
+        debugWorker();
         if (getWorkerJob(unit) == Jobs.Idle) {
             // Idle 이라면 미네랄 채취하도록 한다.
             changeJob(unit, Jobs.Mineral);
@@ -36,14 +38,12 @@ public class Worker {
         if (ExampleUtil.hasRefinery()) {
             if (getAllWorkerJobs(Jobs.Gas).size() < 3) {
                 changeJob(unit, Jobs.Gas);
-                unit.stop();
             }
         }
 
         if (buildingsType != null) {
             if (!getAllWorkerJobs(Jobs.Construction).contains(unit)) {
                 changeJob(unit, Jobs.Construction);
-                unit.stop();
             }
         }
 
@@ -63,8 +63,13 @@ public class Worker {
             return;
         }
 
+        if (getWorkerJob(unit) == Jobs.Scout) {
+            return;
+        }
+
         getAllWorkerJobs(getWorkerJob(unit)).remove(unit);
         getAllWorkerJobs(jobs).add(unit);
+        unit.stop();
     }
 
     public Jobs getWorkerJob(Unit unit) {
@@ -101,6 +106,9 @@ public class Worker {
                 break;
             case Construction:
                 processBuild(unit);
+                break;
+            case Scout:
+                processScout();
                 break;
         }
 
@@ -148,6 +156,46 @@ public class Worker {
         }
 
         this.buildingsType = unitType;
+    }
+
+    public void processScout() {
+
+        if (scoutWorker != null) {
+            return;
+        }
+
+        List<TilePosition> startLocations = ExampleBot.BroodWar.getStartLocations();
+        for (TilePosition tp : startLocations) {
+            if (ExampleBot.BroodWar.isExplored(tp)) {
+                continue;
+            }
+
+            Position pos = tp.toPosition();
+            ExampleBot.BroodWar.drawCircleMap(pos, 4 * 32, Color.Orange, true);
+
+            scoutWorker.move(pos);
+            if (ExampleUtil.checkEnemyBase(scoutWorker.getTilePosition())) {
+                ExampleBot.enemyBase = scoutWorker.getPosition();
+                System.out.println("상대 본진 위치 알아냄 (" + ExampleBot.enemyBase.x + ", " + ExampleBot.enemyBase.y + ")");
+            }
+            break;
+        }
+
+        if (ExampleBot.enemyBase != Position.Unknown) {
+            scoutWorker.move(ExampleBot.BroodWar.self().getStartLocation().toPosition());
+            changeJob(scoutWorker, Jobs.Idle);
+            scoutWorker = null;
+        }
+
+    }
+
+    public void setScoutWorker() {
+        scoutWorker = unit;
+        changeJob(scoutWorker, Jobs.Scout);
+    }
+
+    public void debugWorker() {
+        ExampleBot.BroodWar.drawTextMap(unit.getPosition(), String.valueOf(unit.getID() + "," + getWorkerJob(unit)));
     }
 
 }
