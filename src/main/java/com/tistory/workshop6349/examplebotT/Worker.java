@@ -21,6 +21,8 @@ public class Worker {
 
     public Unit unit;
     public UnitType buildingsType;
+    public TilePosition buildPos;
+    public Unit currentBuilding;
 
     public Worker(Unit unit) {
         this.unit = unit;
@@ -30,20 +32,20 @@ public class Worker {
 
     public void update() {
         debugWorker();
-        if (getWorkerJob(unit) == Jobs.Idle) {
+        if (getWorkerJob() == Jobs.Idle) {
             // Idle 이라면 미네랄 채취하도록 한다.
-            changeJob(unit, Jobs.Mineral);
+            changeJob(Jobs.Mineral);
         }
 
         if (ExampleUtil.hasRefinery()) {
             if (getAllWorkerJobs(Jobs.Gas).size() < 3) {
-                changeJob(unit, Jobs.Gas);
+                changeJob(Jobs.Gas);
             }
         }
 
         if (buildingsType != null) {
             if (!getAllWorkerJobs(Jobs.Construction).contains(unit)) {
-                changeJob(unit, Jobs.Construction);
+                changeJob(Jobs.Construction);
             }
         }
 
@@ -51,28 +53,29 @@ public class Worker {
     }
 
     public void workerDead() {
-        getAllWorkerJobs(getWorkerJob(unit)).remove(unit);
+        getAllWorkerJobs(getWorkerJob()).remove(unit);
     }
 
     public ArrayList<Unit> getAllWorkerJobs(Jobs job) {
         return workerJobs.computeIfAbsent(job, k -> new ArrayList<>());
     }
 
-    public void changeJob(Unit unit, Jobs jobs) {
+    public void changeJob(Jobs jobs) {
         if (getAllWorkerJobs(jobs).contains(unit)) {
             return;
         }
 
-        if (getWorkerJob(unit) == Jobs.Scout) {
+        if (scoutWorker != null && scoutWorker.getID() == unit.getID()) {
             return;
         }
 
-        getAllWorkerJobs(getWorkerJob(unit)).remove(unit);
+        System.out.println(unit.getID() + "일꾼, 직업: " + getWorkerJob() + "로 변경");
+        getAllWorkerJobs(getWorkerJob()).remove(unit);
         getAllWorkerJobs(jobs).add(unit);
         unit.stop();
     }
 
-    public Jobs getWorkerJob(Unit unit) {
+    public Jobs getWorkerJob() {
         for (Jobs jobs : Jobs.values()) {
             if (getAllWorkerJobs(jobs).contains(unit)) {
                 return jobs;
@@ -95,7 +98,7 @@ public class Worker {
             return;
         }
 
-        switch (getWorkerJob(unit)) {
+        switch (getWorkerJob()) {
             case Idle:
                 break;
             case Mineral:
@@ -144,8 +147,32 @@ public class Worker {
 
         int maxBuildingRange = 64;
         boolean buildingOnCreep = buildingsType.requiresCreep();
-        TilePosition buildPos = ExampleBot.BroodWar.getBuildLocation(buildingsType, desiredPos, maxBuildingRange, buildingOnCreep);
-        if (unit.build(buildingsType, buildPos)) {
+        buildPos = ExampleBot.BroodWar.getBuildLocation(buildingsType, desiredPos, maxBuildingRange, buildingOnCreep);
+        unit.build(buildingsType, buildPos);
+    }
+    
+    public void updateConstruction() {
+        for (Unit building : ExampleBot.BroodWar.self().getUnits()) {
+            if (!building.getType().isBuilding() || !building.isBeingConstructed()) {
+                continue;
+            }
+
+            if (currentBuilding != null && currentBuilding.getID() == building.getID()) {
+                continue;
+            }
+
+            if (buildPos.getX() == building.getTilePosition().getX() && buildPos.getX() == building.getTilePosition().getY()) {
+                currentBuilding = building;
+            }
+        }
+
+        if (currentBuilding == null) {
+            return;
+        }
+
+        if (currentBuilding.isCompleted()) {
+            changeJob(Jobs.Idle);
+            currentBuilding = null;
             buildingsType = null;
         }
     }
@@ -176,14 +203,14 @@ public class Worker {
             scoutWorker.move(pos);
             if (ExampleUtil.checkEnemyBase(scoutWorker.getTilePosition())) {
                 ExampleBot.enemyBase = scoutWorker.getPosition();
-                System.out.println("상대 본진 위치 알아냄 (" + ExampleBot.enemyBase.x + ", " + ExampleBot.enemyBase.y + ")");
+                System.out.println("상대 본진 위치 알아냄 (" + ExampleBot.enemyBase.toTilePosition().x + ", " + ExampleBot.enemyBase.toTilePosition().y + ")");
             }
             break;
         }
 
-        if (ExampleBot.enemyBase != Position.Unknown) {
+        if (ExampleBot.enemyBase != Position.Unknown && scoutWorker != null) {
             scoutWorker.move(ExampleBot.BroodWar.self().getStartLocation().toPosition());
-            changeJob(scoutWorker, Jobs.Idle);
+            changeJob(Jobs.Idle);
             scoutWorker = null;
         }
 
@@ -191,11 +218,11 @@ public class Worker {
 
     public void setScoutWorker() {
         scoutWorker = unit;
-        changeJob(scoutWorker, Jobs.Scout);
+        changeJob(Jobs.Scout);
     }
 
     public void debugWorker() {
-        ExampleBot.BroodWar.drawTextMap(unit.getPosition(), String.valueOf(unit.getID() + "," + getWorkerJob(unit)));
+        ExampleBot.BroodWar.drawTextMap(unit.getPosition(), unit.getID() + "," + getWorkerJob());
     }
 
 }

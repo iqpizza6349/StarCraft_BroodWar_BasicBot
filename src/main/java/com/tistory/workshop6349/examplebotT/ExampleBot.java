@@ -64,8 +64,8 @@ public class ExampleBot extends DefaultBWListener {
         }
 
         trainWorkers();
-        checkBuilder();
         scoutWorker();
+        drawInfo();
     }
 
     @Override
@@ -133,7 +133,7 @@ public class ExampleBot extends DefaultBWListener {
 
     public void buildSupply(Worker worker) {
         int unUsedSupply = ExampleUtil.getTotalSupply(false) - BroodWar.self().supplyUsed();
-        if (unUsedSupply >= 4) {
+        if (unUsedSupply > 4) {
             return;
         }
 
@@ -195,23 +195,6 @@ public class ExampleBot extends DefaultBWListener {
         }
     }
 
-
-    public void checkBuilder() {
-        for (UnitType buildType : builders.keySet()) {
-            Worker currentBuilder = builders.get(buildType);
-
-            if (currentBuilder == null) {
-                continue;
-            }
-
-            if (!currentBuilder.unit.isConstructing()) {
-                currentBuilder.changeJob(currentBuilder.unit, Worker.Jobs.Idle);
-                builders.remove(buildType);
-                break;
-            }
-        }
-    }
-
     public void scoutWorker() {
         // 보급고 건설 시작과 동시에 바로 정찰 지정해서 정찰함
 
@@ -236,7 +219,7 @@ public class ExampleBot extends DefaultBWListener {
         }
 
         for (Worker worker : WORKERS) {
-            if (builders.containsValue(worker)) {
+            if (worker.getWorkerJob() != Worker.Jobs.Mineral) {
                 continue;
             }
 
@@ -246,7 +229,18 @@ public class ExampleBot extends DefaultBWListener {
         }
     }
 
+    public void trainUnit(UnitType unitType) {
+        // 유닛 생산
+    }
 
+    public void drawInfo() {
+        if (enemyBase != Position.Unknown && enemyBase.isValid(BroodWar)) {
+            BroodWar.drawCircleMap(enemyBase, 32, Color.Cyan, true);
+        }
 
+        if (Worker.scoutWorker != null) {
+            BroodWar.drawCircleMap(Worker.scoutWorker.getPosition(), 128, Color.Black);
+        }
+    }
 
 }
