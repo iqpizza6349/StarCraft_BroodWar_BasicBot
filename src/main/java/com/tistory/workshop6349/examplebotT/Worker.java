@@ -153,11 +153,6 @@ public class Worker {
             Position pos = tp.toPosition();
 
             scoutWorker.move(pos);
-            if (ExampleUtil.checkEnemyBase(scoutWorker.getTilePosition())) {
-                ExampleBot.enemyBase = scoutWorker.getPosition();
-                System.out.println("상대 본진 위치 알아냄 (" + ExampleBot.enemyBase.toTilePosition().x + ", " + ExampleBot.enemyBase.toTilePosition().y + ")");
-            }
-            break;
         }
 
         if (ExampleBot.enemyBase != Position.Unknown && scoutWorker != null) {
@@ -166,7 +161,6 @@ public class Worker {
             changeJob(Jobs.Idle);
             scoutWorker = null;
         }
-
     }
 
     public void setScoutWorker() {

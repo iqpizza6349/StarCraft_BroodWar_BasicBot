@@ -3,12 +3,8 @@ package com.tistory.workshop6349.examplebotT;
 import bwapi.*;
 import bwem.BWEM;
 import bwem.BWMap;
-import com.tistory.workshop6349.tutorial.Main;
-import com.tistory.workshop6349.tutorial.Tools;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 public class ExampleBot extends DefaultBWListener {
 
@@ -23,6 +19,8 @@ public class ExampleBot extends DefaultBWListener {
 
     public static Unit builder;
     public static Unit currentBuilding;
+
+    public static final ArrayList<Vulture> VULTURES = new ArrayList<>();
 
     public void run() {
         bwClient = new BWClient(this);
@@ -56,6 +54,8 @@ public class ExampleBot extends DefaultBWListener {
             return;
         }
 
+        updateEnemy();
+
         if (BroodWar.getFrameCount() % 24 != 0) {
             return;
         }
@@ -71,7 +71,17 @@ public class ExampleBot extends DefaultBWListener {
             buildGas(worker);
             buildFactory(worker);
         }
+
+        for (Vulture vulture : VULTURES) {
+            if (vulture == null) {
+                continue;
+            }
+
+            vulture.actionExecute();
+        }
+
         updateBuilding();
+        trainUnit(UnitType.Terran_Vulture);
         trainWorkers();
         scoutWorker();
         drawInfo();
@@ -86,6 +96,11 @@ public class ExampleBot extends DefaultBWListener {
         if (unit.getType().isWorker()) {
             Worker worker = new Worker(unit);
             WORKERS.add(worker);
+        }
+
+        if (unit.getType() == UnitType.Terran_Vulture) {
+            Vulture vulture = new Vulture(unit);
+            VULTURES.add(vulture);
         }
     }
 
@@ -330,8 +345,42 @@ public class ExampleBot extends DefaultBWListener {
         }
     }
 
+    public void updateEnemy() {
+        if (Worker.scoutWorker == null) {
+            return;
+        }
+
+        if (enemyBase != Position.Unknown) {
+            return;
+        }
+
+        if (ExampleUtil.checkEnemyBase(Worker.scoutWorker.getTilePosition())) {
+            ExampleBot.enemyBase = Worker.scoutWorker.getPosition();
+            System.out.println("상대 본진 위치 알아냄 (" + ExampleBot.enemyBase.toTilePosition().x + ", " + ExampleBot.enemyBase.toTilePosition().y + ")");
+        }
+    }
+
     public void trainUnit(UnitType unitType) {
         // 유닛 생산
+        if (unitType == null) {
+            return;
+        }
+        
+        // 벌처 8기 모이면 러쉬
+        if (VULTURES.size() > 8) {
+            return;
+        }
+
+        for (Unit fac : BroodWar.self().getUnits()) {
+            if (!fac.isCompleted() && fac.getType() != UnitType.Terran_Factory) {
+                continue;
+            }
+
+            if (!fac.isTraining()) {
+                fac.train(unitType);
+            }
+        }
+
     }
 
     public void drawInfo() {

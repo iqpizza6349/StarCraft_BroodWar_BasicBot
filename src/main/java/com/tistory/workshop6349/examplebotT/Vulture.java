@@ -1,5 +1,6 @@
 package com.tistory.workshop6349.examplebotT;
 
+import bwapi.Position;
 import bwapi.Unit;
 
 import java.util.ArrayList;
@@ -7,9 +8,11 @@ import java.util.ArrayList;
 public class Vulture {
     
     public Unit vulture;
+    public boolean checkBase;
 
     public Vulture(Unit vulture) {
         this.vulture = vulture;
+        this.checkBase = false;
     }
 
     public void update() {
@@ -44,15 +47,21 @@ public class Vulture {
         }
         else {
             // 본진 공격
+            if (checkBase) {
+                ExampleUtil.attackMove(vulture, ExampleBot.enemyBase);
+            }
+            else {
+                if (vulture.getPosition().getApproxDistance(ExampleBot.enemyBase) < 5 * 32) {
+                    checkBase = true;
+                }
+                else {
+                    ExampleUtil.move(vulture, ExampleBot.enemyBase);
+                }
+            }
         }
     }
 
     public void actionExecute() {
-
-        if (ExampleBot.BroodWar.getFrameCount() % 6 != 0) {
-            return;
-        }
-
         update();
     }
     
