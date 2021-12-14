@@ -740,7 +740,7 @@ public class ExampleUtil {
     }
 
     public static boolean checkEnemyBase(TilePosition tilePosition) {
-        for (Unit u : ExampleBot.BroodWar.getUnitsInRadius(tilePosition.toPosition(), 32 * 9)) {
+        for (Unit u : ExampleBot.BroodWar.getUnitsInRadius(tilePosition.toPosition(), 128)) {
             if (u.getPlayer() == ExampleBot.BroodWar.enemy()) {
                 return true;
             }

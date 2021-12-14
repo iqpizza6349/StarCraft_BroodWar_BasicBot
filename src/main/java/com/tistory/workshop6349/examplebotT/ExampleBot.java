@@ -3,9 +3,12 @@ package com.tistory.workshop6349.examplebotT;
 import bwapi.*;
 import bwem.BWEM;
 import bwem.BWMap;
+import com.tistory.workshop6349.tutorial.Main;
+import com.tistory.workshop6349.tutorial.Tools;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 public class ExampleBot extends DefaultBWListener {
 
@@ -15,9 +18,11 @@ public class ExampleBot extends DefaultBWListener {
 
     public static final ArrayList<Worker> WORKERS = new ArrayList<>();
     public static int wantWorkers = 16;
-    public static final HashMap<UnitType, Worker> builders = new HashMap<>();
 
     public static Position enemyBase = Position.Unknown;
+
+    public static Unit builder;
+    public static Unit currentBuilding;
 
     public void run() {
         bwClient = new BWClient(this);
@@ -32,7 +37,7 @@ public class ExampleBot extends DefaultBWListener {
         map = bwem.getMap();
         map.enableAutomaticPathAnalysis();
         BroodWar.setFrameSkip(0);
-        BroodWar.setLocalSpeed(10);
+        BroodWar.setLocalSpeed(5);
 
         BroodWar.enableFlag(Flag.UserInput);
         BroodWar.setCommandOptimizationLevel(2);
@@ -51,6 +56,10 @@ public class ExampleBot extends DefaultBWListener {
             return;
         }
 
+        if (BroodWar.getFrameCount() % 24 != 0) {
+            return;
+        }
+
         for (Worker worker : WORKERS) {
             if (worker == null) {
                 continue;
@@ -58,11 +67,11 @@ public class ExampleBot extends DefaultBWListener {
 
             worker.update();
             buildSupply(worker);
-            buildGas(worker);
             buildBarracks(worker);
+            buildGas(worker);
             buildFactory(worker);
         }
-
+        updateBuilding();
         trainWorkers();
         scoutWorker();
         drawInfo();
@@ -131,68 +140,156 @@ public class ExampleBot extends DefaultBWListener {
         }
     }
 
+    public void updateBuilding() {
+        for (Unit building : BroodWar.self().getUnits()) {
+            if (building.isCompleted() || building.getType().isBuilding()) {
+                continue;
+            }
+
+            if (building.isBeingConstructed()) {
+                currentBuilding = building;
+                break;
+            }
+        }
+
+        if (currentBuilding == null) {
+            return;
+        }
+
+        if (currentBuilding.isCompleted()) {
+            currentBuilding = null;
+        }
+    }
+
+
+    public TilePosition desiredPosition() {
+        return BroodWar.self().getStartLocation();
+    }
+
     public void buildSupply(Worker worker) {
-        int unUsedSupply = ExampleUtil.getTotalSupply(false) - BroodWar.self().supplyUsed();
+        int unUsedSupply = ExampleUtil.getTotalSupply(true) - BroodWar.self().supplyUsed();
         if (unUsedSupply > 4) {
             return;
         }
 
-        UnitType unitType = ExampleUtil.getSupplyType();
-        if (builders.get(unitType) == null && !builders.containsValue(worker)) {
-            builders.put(unitType, worker);
-            worker.setBuildingsType(unitType);
+        if (worker.getWorkerJob() == Worker.Jobs.Scout) {
+            return;
         }
+
+        UnitType unitType = ExampleUtil.getSupplyType();
+
+        if (builder == null) {
+            builder = worker.unit;
+        }
+
+        if (BroodWar.self().minerals() < unitType.mineralPrice()
+                || BroodWar.self().gas() < unitType.gasPrice()) {
+            return;
+        }
+
+        if (currentBuilding != null) {
+            return;
+        }
+
+        int maxBuildingRange = 64;
+        boolean buildingOnCreep = unitType.requiresCreep();
+        TilePosition buildPos = BroodWar.getBuildLocation(unitType, desiredPosition(), maxBuildingRange, buildingOnCreep);
+        builder.build(unitType, buildPos);
     }
 
     public void buildBarracks(Worker worker) {
-        UnitType buildingType = UnitType.Terran_Barracks;
-        int barracks = ExampleUtil.getTypeCount(buildingType);
 
-        int currentWorkers = WORKERS.size();
-        if (currentWorkers < 10) {
+        if (worker.getWorkerJob() == Worker.Jobs.Scout) {
             return;
         }
 
-        if (barracks < 1
-                && builders.get(buildingType) == null
-                && !builders.containsValue(worker)) {
-            builders.put(buildingType, worker);
-            worker.setBuildingsType(buildingType);
+        UnitType unitType = UnitType.Terran_Barracks;
+
+        if (currentBuilding != null) {
+            return;
         }
+
+        if (BroodWar.self().completedUnitCount(UnitType.Terran_Supply_Depot) < 1
+                || BroodWar.self().completedUnitCount(unitType) > 0) {
+            return;
+        }
+
+        if (BroodWar.self().minerals() < unitType.mineralPrice()
+                || BroodWar.self().gas() < unitType.gasPrice()) {
+            return;
+        }
+
+        if (builder == null) {
+            builder = worker.unit;
+        }
+
+        int maxBuildingRange = 64;
+        boolean buildingOnCreep = unitType.requiresCreep();
+        TilePosition buildPos = BroodWar.getBuildLocation(unitType, desiredPosition(), maxBuildingRange, buildingOnCreep);
+        builder.build(unitType, buildPos);
     }
 
     public void buildGas(Worker worker) {
-        UnitType buildingType = UnitType.Terran_Refinery;
-        int refinery = ExampleUtil.getTypeCount(buildingType);
 
-        int currentWorkers = WORKERS.size();
-        if (currentWorkers < 13) {
+        if (worker.getWorkerJob() == Worker.Jobs.Scout) {
             return;
         }
 
-        if (refinery < 1
-                && builders.get(buildingType) == null
-                && !builders.containsValue(worker)) {
-            builders.put(buildingType, worker);
-            worker.setBuildingsType(buildingType);
+        UnitType unitType = UnitType.Terran_Refinery;
+
+        if (builder == null) {
+            builder = worker.unit;
         }
+
+        if (currentBuilding != null) {
+            return;
+        }
+
+        if (BroodWar.self().completedUnitCount(UnitType.Terran_Barracks) < 1
+                || BroodWar.self().completedUnitCount(unitType) > 0) {
+            return;
+        }
+
+        if (BroodWar.self().minerals() < unitType.mineralPrice()
+                || BroodWar.self().gas() < unitType.gasPrice()) {
+            return;
+        }
+        int maxBuildingRange = 64;
+        boolean buildingOnCreep = unitType.requiresCreep();
+        TilePosition buildPos = BroodWar.getBuildLocation(unitType, desiredPosition(), maxBuildingRange, buildingOnCreep);
+        builder.build(unitType, buildPos);
     }
 
     public void buildFactory(Worker worker) {
-        UnitType buildingType = UnitType.Terran_Factory;
-        int factory = ExampleUtil.getTypeCount(buildingType);
 
-        int currentWorkers = WORKERS.size();
-        if (currentWorkers < 17) {
+        if (worker.getWorkerJob() == Worker.Jobs.Scout) {
             return;
         }
 
-        if (factory < 1
-                && builders.get(buildingType) == null
-                && !builders.containsValue(worker)) {
-            builders.put(buildingType, worker);
-            worker.setBuildingsType(buildingType);
+        UnitType unitType = UnitType.Terran_Factory;
+
+        if (currentBuilding != null) {
+            return;
         }
+
+        if (BroodWar.self().completedUnitCount(UnitType.Terran_Refinery) < 1
+                || BroodWar.self().completedUnitCount(unitType) > 0) {
+            return;
+        }
+
+        if (BroodWar.self().minerals() < unitType.mineralPrice()
+                || BroodWar.self().gas() < unitType.gasPrice()) {
+            return;
+        }
+
+        if (builder == null) {
+            builder = worker.unit;
+        }
+
+        int maxBuildingRange = 64;
+        boolean buildingOnCreep = unitType.requiresCreep();
+        TilePosition buildPos = BroodWar.getBuildLocation(unitType, desiredPosition(), maxBuildingRange, buildingOnCreep);
+        builder.build(unitType, buildPos);
     }
 
     public void scoutWorker() {
@@ -220,6 +317,10 @@ public class ExampleBot extends DefaultBWListener {
 
         for (Worker worker : WORKERS) {
             if (worker.getWorkerJob() != Worker.Jobs.Mineral) {
+                continue;
+            }
+
+            if (worker.unit.getID() == builder.getID()) {
                 continue;
             }
 

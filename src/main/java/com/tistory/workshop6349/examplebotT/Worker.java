@@ -11,7 +11,6 @@ public class Worker {
     public enum Jobs {
         Mineral,
         Gas,
-        Construction,
         Idle,
         Scout
     }
@@ -20,9 +19,6 @@ public class Worker {
     public static Unit scoutWorker;
 
     public Unit unit;
-    public UnitType buildingsType;
-    public TilePosition buildPos;
-    public Unit currentBuilding;
 
     public Worker(Unit unit) {
         this.unit = unit;
@@ -43,12 +39,6 @@ public class Worker {
             }
         }
 
-        if (buildingsType != null) {
-            if (!getAllWorkerJobs(Jobs.Construction).contains(unit)) {
-                changeJob(Jobs.Construction);
-            }
-        }
-
         processWork(unit);
     }
 
@@ -65,11 +55,24 @@ public class Worker {
             return;
         }
 
-        if (scoutWorker != null && scoutWorker.getID() == unit.getID()) {
+        if (jobs == Jobs.Scout) {
+            if (scoutWorker != null) {
+                return;
+            }
+            scoutWorker = unit;
+            for (Jobs job : Jobs.values()) {
+                getAllWorkerJobs(job).remove(unit);
+            }
+
+            getAllWorkerJobs(jobs).add(unit);
+            unit.stop();
             return;
         }
 
-        System.out.println(unit.getID() + "일꾼, 직업: " + getWorkerJob() + "로 변경");
+        if (getWorkerJob() == Jobs.Scout && jobs != Jobs.Idle) {
+            return;
+        }
+
         getAllWorkerJobs(getWorkerJob()).remove(unit);
         getAllWorkerJobs(jobs).add(unit);
         unit.stop();
@@ -93,7 +96,7 @@ public class Worker {
         if (!unit.exists()) {
             return;
         }
-        
+
         if (!unit.isIdle()) {
             return;
         }
@@ -106,9 +109,6 @@ public class Worker {
                 break;
             case Gas:
                 gatherGas(unit);
-                break;
-            case Construction:
-                processBuild(unit);
                 break;
             case Scout:
                 processScout();
@@ -138,56 +138,9 @@ public class Worker {
         }
     }
 
-    public void processBuild(Unit unit) {
-        if (buildingsType == null) {
-            return;
-        }
-
-        TilePosition desiredPos = ExampleBot.BroodWar.self().getStartLocation();
-
-        int maxBuildingRange = 64;
-        boolean buildingOnCreep = buildingsType.requiresCreep();
-        buildPos = ExampleBot.BroodWar.getBuildLocation(buildingsType, desiredPos, maxBuildingRange, buildingOnCreep);
-        unit.build(buildingsType, buildPos);
-    }
-    
-    public void updateConstruction() {
-        for (Unit building : ExampleBot.BroodWar.self().getUnits()) {
-            if (!building.getType().isBuilding() || !building.isBeingConstructed()) {
-                continue;
-            }
-
-            if (currentBuilding != null && currentBuilding.getID() == building.getID()) {
-                continue;
-            }
-
-            if (buildPos.getX() == building.getTilePosition().getX() && buildPos.getX() == building.getTilePosition().getY()) {
-                currentBuilding = building;
-            }
-        }
-
-        if (currentBuilding == null) {
-            return;
-        }
-
-        if (currentBuilding.isCompleted()) {
-            changeJob(Jobs.Idle);
-            currentBuilding = null;
-            buildingsType = null;
-        }
-    }
-
-    public void setBuildingsType(UnitType unitType) {
-        if (this.buildingsType == unitType) {
-            return;
-        }
-
-        this.buildingsType = unitType;
-    }
-
     public void processScout() {
 
-        if (scoutWorker != null) {
+        if (scoutWorker == null) {
             return;
         }
 
@@ -198,7 +151,6 @@ public class Worker {
             }
 
             Position pos = tp.toPosition();
-            ExampleBot.BroodWar.drawCircleMap(pos, 4 * 32, Color.Orange, true);
 
             scoutWorker.move(pos);
             if (ExampleUtil.checkEnemyBase(scoutWorker.getTilePosition())) {
@@ -209,6 +161,7 @@ public class Worker {
         }
 
         if (ExampleBot.enemyBase != Position.Unknown && scoutWorker != null) {
+            System.out.println("상대 위치: " + ExampleBot.enemyBase);
             scoutWorker.move(ExampleBot.BroodWar.self().getStartLocation().toPosition());
             changeJob(Jobs.Idle);
             scoutWorker = null;
@@ -217,7 +170,6 @@ public class Worker {
     }
 
     public void setScoutWorker() {
-        scoutWorker = unit;
         changeJob(Jobs.Scout);
     }
 
