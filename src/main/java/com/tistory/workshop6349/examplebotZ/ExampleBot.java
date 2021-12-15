@@ -722,6 +722,7 @@ public class ExampleBot extends DefaultBWListener {
         if (unit.isAttackFrame() || unit.getTarget() != null) {
             return;
         }
+
         if (unit.isMoving() && unit.getTarget() == null) {
             Unit t = getClosestEnemy(unit, 9999);
             if (t != null && unit.canAttackUnit(t)) {
@@ -741,21 +742,13 @@ public class ExampleBot extends DefaultBWListener {
             }
         }
         if (unit.isIdle()) {
-            Unit t = getClosestEnemy(unit, 9999);
-            if (t != null && t.getDistance(unit) >= 160 && unit.canAttack(t)) {
-                if (t.getType().isBuilding()) {
-                    unit.attack(t.getPosition());
-                }
+            if (mainEnemyBase != null) {
+                unit.attack(mainEnemyBase);
             }
             else {
-                if (mainEnemyBase != null) {
-                    unit.attack(mainEnemyBase);
-                }
-                else {
-                    for (BaseInfo b : baseList.values()) {
-                        if (b.possible) {
-                            unit.attack(b.loc);
-                        }
+                for (BaseInfo b : baseList.values()) {
+                    if (b.possible) {
+                        unit.attack(b.loc);
                     }
                 }
             }

@@ -5,6 +5,7 @@ import bwem.BWEM;
 import bwem.BWMap;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 public class ExampleBot extends DefaultBWListener {
 
@@ -16,11 +17,16 @@ public class ExampleBot extends DefaultBWListener {
     public static int wantWorkers = 16;
 
     public static Position enemyBase = Position.Unknown;
+    public static Position TempPlace = Position.None;
 
-    public static Unit builder;
-    public static Unit currentBuilding;
+//    public static Unit builder;
+//    public static Unit currentBuilding;
 
     public static final ArrayList<Vulture> VULTURES = new ArrayList<>();
+    public static final ArrayList<Unit> MARINES = new ArrayList<>();
+    public static final ArrayList<Unit> MEDICS = new ArrayList<>();
+
+    public static boolean StartAttack = false;
 
     public void run() {
         bwClient = new BWClient(this);
@@ -41,6 +47,8 @@ public class ExampleBot extends DefaultBWListener {
         BroodWar.setCommandOptimizationLevel(2);
 
         WORKERS.clear();
+
+        TempPlace = map.getArea(BroodWar.self().getStartLocation()).getChokePoints().get(0).getCenter().toPosition();
     }
 
     @Override
@@ -66,25 +74,59 @@ public class ExampleBot extends DefaultBWListener {
             }
 
             worker.update();
+        }
+
+        if (BroodWar.getFrameCount() % 48 == 0) {
+            Worker worker = WORKERS.get(new Random().nextInt(WORKERS.size() - 1));
+
             buildSupply(worker);
             buildBarracks(worker);
+            buildAcademy(worker);
             buildGas(worker);
             buildFactory(worker);
         }
 
-        for (Vulture vulture : VULTURES) {
-            if (vulture == null) {
-                continue;
+
+        if (StartAttack) {
+
+            for (Vulture vulture : VULTURES) {
+                if (vulture == null) {
+                    continue;
+                }
+
+                vulture.actionExecute();
             }
 
-            vulture.actionExecute();
+            for (Unit unit : MARINES) {
+                ExampleUtil.attackMove(unit, enemyBase);
+            }
         }
 
-        updateBuilding();
+        //updateBuilding();
+
+        UnitType marineOrMedic = UnitType.Terran_Marine;
+
+        if (BroodWar.self().completedUnitCount(UnitType.Terran_Academy) > 0) {
+            marineOrMedic = (MARINES.size() > MEDICS.size() * 4) ? UnitType.Terran_Medic : UnitType.Terran_Marine;
+        }
+        trainUnit(marineOrMedic);
         trainUnit(UnitType.Terran_Vulture);
         trainWorkers();
         scoutWorker();
-        drawInfo();
+
+        if (!StartAttack) {
+            if (MARINES.size() > 25) {
+                StartAttack = true;
+            }
+            for (Unit unit : MARINES) {
+                ExampleUtil.attackMove(unit, TempPlace);
+            }
+        }
+
+        for (Unit u : MEDICS) {
+            Position goPlace = (StartAttack) ? enemyBase : TempPlace;
+            ExampleUtil.move(u, goPlace);
+        }
     }
 
     @Override
@@ -101,6 +143,14 @@ public class ExampleBot extends DefaultBWListener {
         if (unit.getType() == UnitType.Terran_Vulture) {
             Vulture vulture = new Vulture(unit);
             VULTURES.add(vulture);
+        }
+        
+        if (unit.getType() == UnitType.Terran_Marine) {
+            MARINES.add(unit);
+        }
+
+        if (unit.getType() == UnitType.Terran_Medic) {
+            MEDICS.add(unit);
         }
     }
 
@@ -119,6 +169,23 @@ public class ExampleBot extends DefaultBWListener {
                 }
             }
         }
+
+        if (unit.getType() == UnitType.Terran_Vulture) {
+            for (Vulture deadVulture : VULTURES) {
+                if (deadVulture.vulture.getID() == unit.getID()) {
+                    VULTURES.remove(deadVulture);
+                    break;
+                }
+            }
+        }
+
+        if (unit.getType() == UnitType.Terran_Marine) {
+            MARINES.remove(unit);
+        }
+
+        if (unit.getType() == UnitType.Terran_Medic) {
+            MEDICS.remove(unit);
+        }
     }
 
     @Override
@@ -126,6 +193,11 @@ public class ExampleBot extends DefaultBWListener {
         BroodWar.sendText(text);
         if (text.equals("show")) {
             BroodWar.sendText("show me the money");
+        }
+        else if (text.equals("modify")) {
+            BroodWar.sendText("show me the money");
+            BroodWar.sendText("Modify the phase variance");
+            BroodWar.sendText("Food for thought");
         }
     }
 
@@ -156,24 +228,23 @@ public class ExampleBot extends DefaultBWListener {
     }
 
     public void updateBuilding() {
-        for (Unit building : BroodWar.self().getUnits()) {
-            if (building.isCompleted() || building.getType().isBuilding()) {
-                continue;
-            }
-
-            if (building.isBeingConstructed()) {
-                currentBuilding = building;
-                break;
-            }
-        }
-
-        if (currentBuilding == null) {
-            return;
-        }
-
-        if (currentBuilding.isCompleted()) {
-            currentBuilding = null;
-        }
+//        for (Unit building : BroodWar.self().getUnits()) {
+//            if (building.isCompleted() || building.getType().isBuilding()) {
+//                continue;
+//            }
+//
+//            if (building.isBeingConstructed()) {
+//                currentBuilding = building;
+//            }
+//        }
+//
+//        if (currentBuilding == null) {
+//            return;
+//        }
+//
+//        if (currentBuilding.isCompleted()) {
+//            currentBuilding = null;
+//        }
     }
 
 
@@ -193,23 +264,20 @@ public class ExampleBot extends DefaultBWListener {
 
         UnitType unitType = ExampleUtil.getSupplyType();
 
-        if (builder == null) {
-            builder = worker.unit;
-        }
+//        if (builder == null) {
+//            builder = worker.unit;
+//        }
 
         if (BroodWar.self().minerals() < unitType.mineralPrice()
                 || BroodWar.self().gas() < unitType.gasPrice()) {
             return;
         }
 
-        if (currentBuilding != null) {
-            return;
-        }
+//        if (currentBuilding != null) {
+//            return;
+//        }
 
-        int maxBuildingRange = 64;
-        boolean buildingOnCreep = unitType.requiresCreep();
-        TilePosition buildPos = BroodWar.getBuildLocation(unitType, desiredPosition(), maxBuildingRange, buildingOnCreep);
-        builder.build(unitType, buildPos);
+        buildSomething(worker.unit, unitType);
     }
 
     public void buildBarracks(Worker worker) {
@@ -220,28 +288,51 @@ public class ExampleBot extends DefaultBWListener {
 
         UnitType unitType = UnitType.Terran_Barracks;
 
-        if (currentBuilding != null) {
+        if (BroodWar.self().completedUnitCount(UnitType.Terran_Supply_Depot) < 1
+                || BroodWar.self().completedUnitCount(unitType) > 1) {
             return;
         }
 
-        if (BroodWar.self().completedUnitCount(UnitType.Terran_Supply_Depot) < 1
+        if (BroodWar.self().minerals() < unitType.mineralPrice()) {
+            return;
+        }
+
+//        if (builder == null) {
+//            builder = worker.unit;
+//        }
+//
+//        if (currentBuilding != null) {
+//            return;
+//        }
+
+        buildSomething(worker.unit, unitType);
+    }
+
+    public void buildAcademy(Worker worker) {
+        if (worker.getWorkerJob() == Worker.Jobs.Scout) {
+            return;
+        }
+
+        UnitType unitType = UnitType.Terran_Academy;
+
+        if (BroodWar.self().completedUnitCount(UnitType.Terran_Barracks) < 1
                 || BroodWar.self().completedUnitCount(unitType) > 0) {
             return;
         }
 
-        if (BroodWar.self().minerals() < unitType.mineralPrice()
-                || BroodWar.self().gas() < unitType.gasPrice()) {
+        if (BroodWar.self().minerals() < unitType.mineralPrice()) {
             return;
         }
 
-        if (builder == null) {
-            builder = worker.unit;
-        }
+//        if (builder == null) {
+//            builder = worker.unit;
+//        }
+//
+//        if (currentBuilding != null) {
+//            return;
+//        }
 
-        int maxBuildingRange = 64;
-        boolean buildingOnCreep = unitType.requiresCreep();
-        TilePosition buildPos = BroodWar.getBuildLocation(unitType, desiredPosition(), maxBuildingRange, buildingOnCreep);
-        builder.build(unitType, buildPos);
+        buildSomething(worker.unit, unitType);
     }
 
     public void buildGas(Worker worker) {
@@ -252,13 +343,9 @@ public class ExampleBot extends DefaultBWListener {
 
         UnitType unitType = UnitType.Terran_Refinery;
 
-        if (builder == null) {
-            builder = worker.unit;
-        }
-
-        if (currentBuilding != null) {
-            return;
-        }
+//        if (builder == null) {
+//            builder = worker.unit;
+//        }
 
         if (BroodWar.self().completedUnitCount(UnitType.Terran_Barracks) < 1
                 || BroodWar.self().completedUnitCount(unitType) > 0) {
@@ -269,10 +356,12 @@ public class ExampleBot extends DefaultBWListener {
                 || BroodWar.self().gas() < unitType.gasPrice()) {
             return;
         }
-        int maxBuildingRange = 64;
-        boolean buildingOnCreep = unitType.requiresCreep();
-        TilePosition buildPos = BroodWar.getBuildLocation(unitType, desiredPosition(), maxBuildingRange, buildingOnCreep);
-        builder.build(unitType, buildPos);
+
+//        if (currentBuilding != null) {
+//            return;
+//        }
+
+        buildSomething(worker.unit, unitType);
     }
 
     public void buildFactory(Worker worker) {
@@ -283,12 +372,9 @@ public class ExampleBot extends DefaultBWListener {
 
         UnitType unitType = UnitType.Terran_Factory;
 
-        if (currentBuilding != null) {
-            return;
-        }
-
         if (BroodWar.self().completedUnitCount(UnitType.Terran_Refinery) < 1
-                || BroodWar.self().completedUnitCount(unitType) > 0) {
+                || BroodWar.self().completedUnitCount(unitType) > 0
+                || BroodWar.self().completedUnitCount(UnitType.Terran_Barracks) < 1) {
             return;
         }
 
@@ -296,16 +382,22 @@ public class ExampleBot extends DefaultBWListener {
                 || BroodWar.self().gas() < unitType.gasPrice()) {
             return;
         }
+//
+//        if (builder == null) {
+//            builder = worker.unit;
+//        }
+//
+//        if (currentBuilding != null) {
+//            return;
+//        }
 
-        if (builder == null) {
-            builder = worker.unit;
-        }
-
-        int maxBuildingRange = 64;
-        boolean buildingOnCreep = unitType.requiresCreep();
-        TilePosition buildPos = BroodWar.getBuildLocation(unitType, desiredPosition(), maxBuildingRange, buildingOnCreep);
-        builder.build(unitType, buildPos);
+        buildSomething(worker.unit, unitType);
     }
+
+    public void buildSomething(Unit worker, UnitType unitType) {
+        worker.build(unitType, BroodWar.getBuildLocation(unitType, desiredPosition(), 64, false));
+    }
+
 
     public void scoutWorker() {
         // 보급고 건설 시작과 동시에 바로 정찰 지정해서 정찰함
@@ -335,7 +427,7 @@ public class ExampleBot extends DefaultBWListener {
                 continue;
             }
 
-            if (worker.unit.getID() == builder.getID()) {
+            if (worker.unit.isConstructing()) {
                 continue;
             }
 
@@ -365,32 +457,19 @@ public class ExampleBot extends DefaultBWListener {
         if (unitType == null) {
             return;
         }
-        
-        // 벌처 8기 모이면 러쉬
-        if (VULTURES.size() > 8) {
-            return;
-        }
 
         for (Unit fac : BroodWar.self().getUnits()) {
-            if (!fac.isCompleted() && fac.getType() != UnitType.Terran_Factory) {
+            if (!fac.isCompleted() || !fac.getType().isBuilding()) {
                 continue;
             }
 
             if (!fac.isTraining()) {
-                fac.train(unitType);
+                if (fac.canTrain(unitType)) {
+                    fac.train(unitType);
+                }
             }
         }
 
-    }
-
-    public void drawInfo() {
-        if (enemyBase != Position.Unknown && enemyBase.isValid(BroodWar)) {
-            BroodWar.drawCircleMap(enemyBase, 32, Color.Cyan, true);
-        }
-
-        if (Worker.scoutWorker != null) {
-            BroodWar.drawCircleMap(Worker.scoutWorker.getPosition(), 128, Color.Black);
-        }
     }
 
 }
