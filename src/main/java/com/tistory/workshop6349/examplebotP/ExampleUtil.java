@@ -1,10 +1,8 @@
 package com.tistory.workshop6349.examplebotP;
 
 import bwapi.*;
-import com.tistory.workshop6349.tutorial.Tools;
 
 import java.util.List;
-import java.util.Random;
 
 public class ExampleUtil {
 
@@ -54,18 +52,20 @@ public class ExampleUtil {
     public static void buildBuildings(UnitType type) {
         Unit builder = ExampleBot.workers.get(0);
 
-        if (builder.isConstructing()) {
+        if (builder.isConstructing()
+                || (ExampleBot.scoutWorker != null && builder.getID() == ExampleBot.scoutWorker.getID())) {
             return;
         }
 
         TilePosition desiredPos = ExampleBot.BroodWar.self().getStartLocation();
         TilePosition buildPos = ExampleBot.BroodWar.getBuildLocation(type, desiredPos, 64, false);
-        int buildMax = 64;
 
         if (type.requiresPsi()) {
-            while (!ExampleBot.BroodWar.hasPower(buildPos) || buildMax <= 128) {
-                buildPos = ExampleBot.BroodWar.getBuildLocation(type, desiredPos, buildMax, false);
-                buildMax += 8;
+            for (int i = 64; i < 128; i += 8) {
+                if (ExampleBot.BroodWar.hasPowerPrecise(buildPos.toPosition())) {
+                    break;
+                }
+                buildPos = ExampleBot.BroodWar.getBuildLocation(type, desiredPos, i, false);
             }
         }
 
@@ -85,7 +85,7 @@ public class ExampleUtil {
             return;
         }
 
-        if (attacker.getLastCommandFrame() >= com.tistory.workshop6349.examplebotT.ExampleBot.BroodWar.getFrameCount()) {
+        if (attacker.getLastCommandFrame() >= ExampleBot.BroodWar.getFrameCount()) {
             return;
         }
 
@@ -97,7 +97,7 @@ public class ExampleUtil {
             return;
         }
 
-        if (com.tistory.workshop6349.examplebotT.ExampleBot.BroodWar.getFrameCount() - attacker.getLastCommandFrame() > 5 * 24) {
+        if (ExampleBot.BroodWar.getFrameCount() - attacker.getLastCommandFrame() > 5 * 24) {
             repeat = true;
         }
 
@@ -118,11 +118,11 @@ public class ExampleUtil {
     }
 
     public static void attackMove(Unit attacker, Position targetPosition, boolean repeat) {
-        if (attacker == null || !targetPosition.isValid(com.tistory.workshop6349.examplebotT.ExampleBot.BroodWar)) {
+        if (attacker == null || !targetPosition.isValid(ExampleBot.BroodWar)) {
             return;
         }
 
-        if (attacker.getLastCommandFrame() >= com.tistory.workshop6349.examplebotT.ExampleBot.BroodWar.getFrameCount()) {
+        if (attacker.getLastCommandFrame() >= ExampleBot.BroodWar.getFrameCount()) {
             return;
         }
 
@@ -134,7 +134,7 @@ public class ExampleUtil {
             return;
         }
 
-        if (com.tistory.workshop6349.examplebotT.ExampleBot.BroodWar.getFrameCount() - attacker.getLastCommandFrame() > 5 * 24) {
+        if (ExampleBot.BroodWar.getFrameCount() - attacker.getLastCommandFrame() > 5 * 24) {
             repeat = true;
         }
 
@@ -155,15 +155,15 @@ public class ExampleUtil {
 
     public static void move(Unit attacker, Position position, boolean repeat) {
 
-        if (attacker == null || !position.isValid(com.tistory.workshop6349.examplebotT.ExampleBot.BroodWar)) {
+        if (attacker == null || !position.isValid(ExampleBot.BroodWar)) {
             return;
         }
 
-        if (attacker.getLastCommandFrame() >= com.tistory.workshop6349.examplebotT.ExampleBot.BroodWar.getFrameCount()) {
+        if (attacker.getLastCommandFrame() >= ExampleBot.BroodWar.getFrameCount()) {
             return;
         }
 
-        if (com.tistory.workshop6349.examplebotT.ExampleBot.BroodWar.getFrameCount() - attacker.getLastCommandFrame() > 5 * 24) {
+        if (ExampleBot.BroodWar.getFrameCount() - attacker.getLastCommandFrame() > 5 * 24) {
             repeat = true;
         }
 
@@ -184,12 +184,34 @@ public class ExampleUtil {
     }
 
     public static boolean checkEnemyBase(TilePosition tilePosition) {
-        for (Unit u : com.tistory.workshop6349.examplebotT.ExampleBot.BroodWar.getUnitsInRadius(tilePosition.toPosition(), 256)) {
-            if (u.getPlayer() == com.tistory.workshop6349.examplebotT.ExampleBot.BroodWar.enemy()) {
+        for (Unit u : ExampleBot.BroodWar.getUnitsInRadius(tilePosition.toPosition(), 256)) {
+            if (u.getPlayer() == ExampleBot.BroodWar.enemy()) {
                 return true;
             }
         }
         return false;
+    }
+
+    public static Unit getClosestEnemy(Unit unit, int r) {
+        if (unit == null) {
+            return null;
+        }
+
+        Unit nearestEnemy = null;
+        double minDist = Double.MAX_VALUE;
+        for (Unit enemy : unit.getUnitsInRadius(r)) {
+            if (unit.getPlayer() != ExampleBot.BroodWar.enemy()) {
+                continue;
+            }
+
+            double dist = unit.getDistance(enemy);
+
+            if (dist < minDist) {
+                minDist = dist;
+                nearestEnemy = enemy;
+            }
+        }
+        return nearestEnemy;
     }
 
 }
