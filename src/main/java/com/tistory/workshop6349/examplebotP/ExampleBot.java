@@ -5,7 +5,6 @@ import bwem.BWEM;
 import bwem.BWMap;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public class ExampleBot extends DefaultBWListener {
@@ -15,7 +14,6 @@ public class ExampleBot extends DefaultBWListener {
     public static BWMap map;
 
     public static final ArrayList<Unit> workers = new ArrayList<>();
-    public static final HashMap<UnitType, ArrayList<Unit>> army = new HashMap<>();
     public static final ArrayList<Unit> soldiers = new ArrayList<>();
     public static Unit scoutWorker = null;
 
@@ -24,6 +22,7 @@ public class ExampleBot extends DefaultBWListener {
 
     public static boolean StartAttack = false;
     public static boolean ZealotRush = false;
+    public static int zealotRushEnd = 6;
     public static int deadZealots = 0;
     public static Position waitingPosition = Position.None;
     public static Position enemyBase = Position.Unknown;
@@ -48,7 +47,6 @@ public class ExampleBot extends DefaultBWListener {
 
         leftBuildings.clear();
         workers.clear();
-        army.clear();
         soldiers.clear();
         scoutWorker = null;
         gasWorker1 = null;
@@ -118,19 +116,10 @@ public class ExampleBot extends DefaultBWListener {
 
         if (unit.getType().isWorker()) {
             workers.add(unit);
-
-            if (gasWorker1 == null) {
-                gasWorker1 = unit;
-            }
-            else if (gasWorker2 == null) {
-                gasWorker2 = unit;
-            }
-
         }
 
         if (unit.getType() == UnitType.Protoss_Zealot
                 || unit.getType() == UnitType.Protoss_Dragoon) {
-            army.computeIfAbsent(unit.getType(), k -> new ArrayList<>()).add(unit);
             soldiers.add(unit);
         }
     }
@@ -169,10 +158,9 @@ public class ExampleBot extends DefaultBWListener {
 
         if (unit.getType() == UnitType.Protoss_Zealot
                 || unit.getType() == UnitType.Protoss_Dragoon) {
-            army.get(unit.getType()).remove(unit);
             soldiers.remove(unit);
 
-            if (unit.getType() == UnitType.Protoss_Zealot) {
+            if (unit.getType() == UnitType.Protoss_Zealot && ZealotRush) {
                 deadZealots++;
             }
         }
@@ -225,6 +213,29 @@ public class ExampleBot extends DefaultBWListener {
     }
 
     public void gatherGas() {
+
+        if (ExampleUtil.countUnitType(UnitType.Protoss_Assimilator) < 1) {
+            return;
+        }
+
+        for (Unit worker : workers) {
+            if (worker == null || !worker.exists()) {
+                continue;
+            }
+
+            if (!worker.isConstructing()) {
+                continue;
+            }
+
+            if (gasWorker1 == null) {
+                gasWorker1 = worker;
+            }
+            else if (gasWorker2 == null) {
+                gasWorker2 = worker;
+            }
+
+        }
+
         gatherGas(gasWorker1);
         gatherGas(gasWorker2);
     }
@@ -365,18 +376,16 @@ public class ExampleBot extends DefaultBWListener {
 
         if (!StartAttack) {
             // 공격 가기 전에는 첫 번째 길목에서 대기
-            for (UnitType type : army.keySet()) {
-                for (Unit soldier : army.get(type)) {
-                    if (soldier == null || !soldier.exists()) {
-                        continue;
-                    }
-
-                    soldier.move(waitingPosition);
+            for (Unit soldier : soldiers) {
+                if (soldier == null || !soldier.exists()) {
+                    continue;
                 }
-            }
 
+                soldier.move(waitingPosition);
+            }
+            
             if (!ZealotRush) {
-                if (army.getOrDefault(UnitType.Protoss_Zealot, new ArrayList<>()).size() > 4) {
+                if (BroodWar.self().completedUnitCount(UnitType.Protoss_Zealot) > 5) {
                     StartAttack = true;
                     ZealotRush = true;
                 }
@@ -396,7 +405,8 @@ public class ExampleBot extends DefaultBWListener {
             StartAttack = (soldiers.size() > 4);
 
             if (ZealotRush) {
-                if (deadZealots > 6) {
+                if (deadZealots > zealotRushEnd) {
+                    zealotRushEnd = 99;
                     StartAttack = false;
                 }
             }
@@ -472,6 +482,13 @@ public class ExampleBot extends DefaultBWListener {
         List<TilePosition> startLocations = ExampleBot.BroodWar.getStartLocations();
         for (TilePosition tp : startLocations) {
             if (ExampleBot.BroodWar.isExplored(tp)) {
+                if (ExampleUtil.checkEnemyBase(tp)) {
+                    try {
+                        enemyBase = map.getArea(tp).getBases().get(0).getLocation().toPosition();
+                    } catch (NullPointerException e) {
+                        enemyBase = BroodWar.getStartLocations().get(BroodWar.getStartLocations().size() - 1).toPosition();
+                    }
+                }
                 continue;
             }
 
@@ -484,14 +501,6 @@ public class ExampleBot extends DefaultBWListener {
     public void updateBaseInfo() {
         if (scoutWorker == null) {
             return;
-        }
-
-        if (ExampleUtil.checkEnemyBase(scoutWorker.getTilePosition())) {
-            try {
-                enemyBase = map.getArea(scoutWorker.getTilePosition()).getBases().get(0).getLocation().toPosition();
-            } catch (NullPointerException e) {
-                enemyBase = BroodWar.getStartLocations().get(BroodWar.getStartLocations().size() -1).toPosition();
-            }
         }
 
         if (ExampleBot.enemyBase != Position.Unknown) {
