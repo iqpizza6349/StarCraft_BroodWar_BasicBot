@@ -23,9 +23,9 @@ public class BasicMap {
     public static boolean [][]walk_Map = new boolean[256][256];
     public static boolean [][]spaceMap = new boolean[256][256];
 
-    public static boolean [][][]mainDistArray = new boolean[8][256][256];
-    public static boolean [][]centerDistMap = new boolean[256][256];
-    public static boolean [][]mainPathMap = new boolean[256][256];
+    public static int [][][]mainDistArray = new int[8][256][256];
+    public static int [][]centerDistMap = new int[256][256];
+    public static int [][]mainPathMap = new int[256][256];
 
     public static boolean [][][]chokeMap = new boolean[8][256][256];
     public static boolean [][]mainMap = new boolean[256][256];
