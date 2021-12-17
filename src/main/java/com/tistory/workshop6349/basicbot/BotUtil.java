@@ -5,12 +5,13 @@ import bwapi.TilePosition;
 import bwapi.Unit;
 import bwapi.WalkPosition;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 public class BotUtil {
 
     public static int safeSum(int n, int dn) {
-        return  (n > -dn) ? n + dn : 0; // call by reference 하고 싶지만 현실적으로 힘들어서 그냥 call by value 를 함
+        return (n > -dn) ? n + dn : 0; // call by reference 하고 싶지만 현실적으로 힘들어서 그냥 call by value 를 함
     }
 
     public static boolean isNone(TilePosition t) {
@@ -88,10 +89,82 @@ public class BotUtil {
         return (int)(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
     }
 
+    public static Position getClosestTo(ArrayList<Position> v, Position p) {
+        Position minPos = Position.None;
+        int minDist = 134217728;
+        int myDist = 0;
 
+        for (Position pos : v) {
+            myDist = sqDist(pos, p);
+            if (minDist > myDist) {
+                minDist = myDist;
+                minPos = pos;
+            }
+        }
 
+        return minPos;
+    }
 
+    public static Unit getClosest(ArrayList<Unit> v, Position p) {
+        Unit minUnit = null;
+        int minDist = 134217728;
+        int myDist = 0;
 
+        for (Unit u : v) {
+            if (!u.exists()) {
+                continue;
+            }
 
+            myDist = sqDist(u, p);
+            if (minDist > myDist) {
+                minDist = myDist;
+                minUnit = u;
+            }
+        }
+
+        return minUnit;
+    }
+
+    public static Unit getClosest(ArrayList<Unit> v, TilePosition t) {
+        Unit minUnit = null;
+        int minDist = 131072;
+        int myDist = 0;
+
+        for (Unit u : v) {
+            if (!u.exists()) {
+                continue;
+            }
+
+            myDist = sqDist(t, u.getTilePosition());
+            if (minDist > myDist) {
+                minDist = myDist;
+                minUnit = u;
+            }
+        }
+
+        return minUnit;
+    }
+
+    public static Unit getInRange(ArrayList<Unit> v, TilePosition t, int sqrt) {
+        if (t != TilePosition.None) {
+            for (Unit u : v) {
+                if (sqDist(t, u.getTilePosition()) <= sqrt) {
+                    return u;
+                }
+            }
+        }
+        return null;
+    }
+
+    public static Unit getInRange(ArrayList<Unit> v, Position p, int sqrt) {
+        if (p != Position.None) {
+            for (Unit u : v) {
+                if (sqDist(u, p) <= sqrt) {
+                    return u;
+                }
+            }
+        }
+        return null;
+    }
 
 }

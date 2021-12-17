@@ -554,9 +554,6 @@ public class EnemyManager {
             if (!justChange && !u.isCompleted()) {
                 t += 30 + 40;
             }
-            if (justChange && !u.isCompleted()) {
-                t += 0;
-            }
             time_lair_reaction = t;
         }
     }
