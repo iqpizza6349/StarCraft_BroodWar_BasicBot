@@ -119,6 +119,8 @@ public class Fighter {
 
     }
 
+    // ------- M E T H O D S -------
+
     public void update() {
 
         if (unit == null) {
@@ -142,14 +144,212 @@ public class Fighter {
         tile = unit.getTilePosition();
         position = unit.getPosition();
         target = null;
-         attackQueue = BotUtil.safeSum(attackQueue, -1);
+        attackQueue = BotUtil.safeSum(attackQueue, -1);
+
+        if (!BotUtil.isNone(BasicMap.myBunkerDefPos)
+                && unit.getType() != UnitType.Terran_Vulture
+                && MicroUtil.checkVentureOut(position)) {
+            // don't venture out (high priority)
+            setRetreat();
+            return;
+        }
+
+        if (attackQueue == 0
+                && !isSupport
+                && EnemyManager.getInstance().target_count < 16) {
+            // medic no targeting
+            target = getTargetAll(attackSqrt);
+        }
+
+        if (target == null && BasicBotAI.BroodWar.getFrameCount() <= unit.getLastCommandFrame() + commandFrames) {
+            return;
+        }
+
+        if ((StateManager.getInstance().avoidGridDef
+                && MicroUtil.reachingArea(unit, ThreatManager.groundDef))
+                || MicroUtil.reachingArea(unit, ThreatManager.groundMap)) {
+            setRetreat();
+            return;
+        }
+
+        switch (unit.getType()) {
+            case Terran_Medic:
+                target = getTargetHeal();
+                break;
+            case Terran_Siege_Tank_Siege_Mode:
+                target = getTargetSiege();
+                break;
+            case Terran_Goliath:
+                target = getTargetGoliath();
+                break;
+            case Terran_Vulture:
+                target = getTargetVulture();
+                break;
+            default:
+                target = getTargetAll(attackSqrt);
+                break;
+        }
+
+        if (target != null) {
+            if (!isSupport) {
+                if (BotUtil.sqDist(position, target.getPosition()) < retreatSqrt && BotUtil.sqDist(position, securePosition) > 9216) {
+                    setRetreat();
+                }
+                else {
+                    unit.attack(target);
+                    attackQueue = 256;
+                }
+            }
+            else {
+                unit.move(target.getPosition());
+                MicroUtil.drawArrow(position, target.getPosition(), Color.Yellow);
+            }
+        }
+        else {
+            Position dest = (!BotUtil.isNone(specialPosition)) ? specialPosition : attackPosition;
+            if (dest.isValid(BasicBotAI.BroodWar) && BotUtil.sqDist(position, dest) > 9216) {
+                unit.attack(dest);
+            }
+            checkCohesionRetreat();
+        }
+        specialsAllowed = true;
     }
 
+    public void updateVulture() {
+        specialsAllowed = false;
+        tile = unit.getTilePosition();
+        position = unit.getPosition();
+        destinPosition = (!BotUtil.isNone(specialPosition)) ? specialPosition : attackPosition;
 
+        if (!unit.exists()
+                || unit.getTransport() != null
+                || unit.isLockedDown()
+                || unit.isStasised()) {
+            return;
+        }
 
+        if (attackQueue > 0 && !isLooping) {
+            // looping start after attack
+            --attackQueue;
+            if (unit.getGroundWeaponCooldown() > 0) {
+                setRetreat();
+                isLooping = true;
+                target = null;
+            }
+            if (attackQueue == 0) {
+                target = null;
+            }
+            return;
+        }
+        
+        if (isLooping) {
+            // looping phase: check back or forth
+            if (unit.getGroundWeaponCooldown() % 5 == 0) {
+                target = getTargetVulture();
+            }
+            if (target != null) {
+                int d = BotUtil.dist(position, target.getPosition());
+                int s = unit.getGroundWeaponCooldown() * 8;
 
+                if (s < d) {
+                    unit.patrol(target.getPosition());
+                    isLooping = false;
+                }
 
+            }
+            if (unit.getGroundWeaponCooldown() < 15 && target == null) {
+                unit.move(destinPosition);
+                isLooping = false;
+            }
+            return;
+        }
 
+        if ((StateManager.getInstance().avoidGridDef && MicroUtil.reachingArea(unit, ThreatManager.groundDef))
+                || MicroUtil.reachingArea(unit, ThreatManager.groundMap)) {
+            // avoid ground threats
+            setRetreat();
+            retreatQueue = 32;
+            return;
+        }
+
+        target = getTargetVulture();
+        if (target != null) {
+            // issue attack command
+            unit.attack(target);
+            attackQueue = 8;
+            return;
+        }
+
+        if (unit.isIdle()
+                && destinPosition.isValid(BasicBotAI.BroodWar)
+                && BotUtil.sqDist(position, destinPosition) >= 15384) {
+            // get moving
+            unit.move(destinPosition);
+            return;
+        }
+
+        checkCohesionRetreat();
+        specialsAllowed = true;
+    }
+
+    public void setTarget(Position pos, boolean isAttack) {
+        if (!attackPosition.equals(pos)) {
+            attackPosition = pos;
+            isAttacker = isAttack;
+            changedAttackPos = true;
+        }
+    }
+
+    public void setSwarm(boolean immediately) {
+        if (immediately || unit.isIdle()) {
+            setTarget(BotUtil.get_random_position(), false);
+        }
+    }
+
+    public void updateRaider(int state, Position attackPos, Position defPos, Unit transport) {
+        securePosition = defPos;
+        attackPosition = attackPos;
+
+        switch (state) {
+            case 0:
+                isRaider = false;
+                this.transport = null;
+                break;
+            case 1:
+                this.transport = transport;
+                forceUnsiege();
+                break;
+            case 2:
+                this.transport = null;
+                break;
+            default:
+                break;
+        }
+    }
+
+    public void setRetreat() {
+        if (!isRaider) {
+            unit.move(securePosition);
+        }
+    }
+
+    public void checkCohesionRetreat() {
+        if (retreatQueue > 0) {
+            --retreatQueue;
+            if (retreatQueue == 0) {
+                unit.move(destinPosition);
+            }
+            return;
+        }
+        if (isAttacker
+                && !isRaider
+                && BotUtil.isNone(specialPosition)
+                && StateManager.getInstance().leaderDist > 0
+                && MapUtil.getGroundDist(tile) > StateManager.getInstance().leaderDist) {
+            unit.move(securePosition);
+            retreatQueue = 32;
+        }
+    }
 
     // ------- S P E C I A L S -------
 

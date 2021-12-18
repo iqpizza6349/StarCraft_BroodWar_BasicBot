@@ -564,7 +564,6 @@ public class EnemyManager {
         }
     }
 
-
     public int getIntruderCount(UnitType type) {
         int i = 0;
         for (Unit u : intruders) {
