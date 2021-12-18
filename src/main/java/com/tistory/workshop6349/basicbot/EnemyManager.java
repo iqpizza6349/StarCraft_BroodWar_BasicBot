@@ -110,7 +110,7 @@ public class EnemyManager {
     public ArrayList<UnitInfo> siegetanks = new ArrayList<>();
 
     private boolean need_race = false;
-    private ArrayList<Integer> ids = new ArrayList<>();
+    private final ArrayList<Integer> ids = new ArrayList<>();
 
     public EnemyManager() {
         if (BasicBotAI.BroodWar.enemies().size() == 1) {

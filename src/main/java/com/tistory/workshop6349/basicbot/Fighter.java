@@ -28,7 +28,7 @@ public class Fighter {
     public int attackQueue;
     public int specialQueue;
     public int retreatQueue;
-    public int spiderMineQueue;
+    public int spiderMineCount;
     public int commandFrames;
     public int stuckQueue;
 
@@ -59,7 +59,7 @@ public class Fighter {
         this.attackQueue = 0;
         this.specialQueue = 0;
         this.retreatQueue = 0;
-        this.spiderMineQueue = 0;
+        this.spiderMineCount = 0;
         this.commandFrames = 0;
         this.stuckQueue = 0;
 
@@ -142,21 +142,7 @@ public class Fighter {
         tile = unit.getTilePosition();
         position = unit.getPosition();
         target = null;
-        // TODO saveSum(attackQueue, -1);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+         attackQueue = BotUtil.safeSum(attackQueue, -1);
     }
 
 
@@ -165,6 +151,174 @@ public class Fighter {
 
 
 
+    // ------- S P E C I A L S -------
+
+    public void checkStim() {
+        if (StateManager.getInstance().stimAllowed
+                && !unit.isStimmed()
+                && unit.isAttacking()
+                && unit.getHitPoints() >= 40) {
+            unit.useTech(TechType.Stim_Packs);
+        }
+    }
+
+    public void checkFallB() {
+        if (specialsAllowed && unit.getHitPoints() < 20) {
+            unit.move(securePosition);
+        }
+    }
+
+    public void checkFlare() {
+        if (BasicBotAI.BroodWar.self().hasResearched(TechType.Optical_Flare)
+                && specialsAllowed
+                && unit.getEnergy() >= 100) {
+            Unit u = MicroUtil.getMaximumTarget(EnemyManager.getInstance().tlflare, tile, 100);
+            if (u != null && unit.canUseTech(TechType.Optical_Flare, u)) {
+                unit.useTech(TechType.Optical_Flare, u);
+                StateManager.getInstance().targetList.add(u);
+                BasicBotAI.BroodWar.drawLineMap(position, u.getPosition(), Color.White);
+            }
+        }
+    }
+
+    public void checkLocked() {
+        if (BasicBotAI.BroodWar.self().hasResearched(TechType.Lockdown)
+                && specialsAllowed && unit.getEnergy() >= 100) {
+            Unit u = MicroUtil.getMaximumTarget(EnemyManager.getInstance().tllockd, tile, 100);
+            if (u != null && unit.canUseTech(TechType.Lockdown, u)) {
+                unit.useTech(TechType.Lockdown, u);
+                StateManager.getInstance().targetList.add(u);
+                BasicBotAI.BroodWar.drawLineMap(position, u.getPosition(), Color.White);
+            }
+        }
+    }
+
+    public void checkCloak() {
+        if (!unit.isCloaked()
+                && unit.isUnderAttack()
+                && unit.canUseTech(TechType.Personnel_Cloaking)) {
+            unit.cloak();
+        }
+        if (unit.isCloaked() && !unit.isUnderAttack()) {
+            unit.decloak();
+        }
+    }
+
+    public void checkUnstuck() {
+        if (unit.getPosition().equals(stuckPosition)
+                && !unit.isMaelstrommed()
+                && !unit.isStasised()
+                && !unit.isLockedDown()
+                && unit.getTransport() == null) {
+            stuckQueue++;
+            if (stuckQueue >= 16) {
+                unit.stop();
+                stuckQueue = 0;
+            }
+        }
+        else {
+            stuckPosition = unit.getPosition();
+            stuckQueue = 0;
+        }
+    }
+
+    // ------- M E C H A N I C A L S -------
+
+    public void checkSiege() {
+        if (!BasicBotAI.BroodWar.self().hasResearched(TechType.Tank_Siege_Mode)) {
+            return;
+        }
+
+        // general sieging behavior
+        if (!unit.isSieged() && transport == null) {
+            target = getTargetSiege();
+            if (target != null && BotUtil.sqDist(position, BotUtil.estimate_next_pos(target, 24)) >= 16384) {
+                unit.siege();
+                specialQueue = 128;
+            }
+        }
+        else {
+            specialQueue = BotUtil.safeSum(specialQueue, -1);
+            if (unit.isStartingAttack() || unit.isAttackFrame()) {
+                specialQueue = 128;
+            }
+            else if (specialQueue == 0) {
+                unit.unsiege();
+            }
+
+        }
+
+        // choke defense case
+        if (StateManager.getInstance().isChokeDef) {
+            if (specialPosition == Position.None) {
+                specialPosition = MicroUtil.checkDefenseSiegeTile();
+            }
+            else if (position.equals(specialPosition)) {
+                if (!unit.isSieged()) {
+                    unit.siege();
+                }
+                if (specialQueue < 32) {
+                    specialQueue = 32;
+                }
+            }
+        }
+
+        if (changedAttackPos) {
+            changedAttackPos = false;
+
+            if (specialPosition != Position.None
+                    && (!StateManager.getInstance().isChokeDef || !MicroUtil.checkDefenseSiegeTile(tile))) {
+                specialPosition = Position.None;
+            }
+        }
+
+    }
+
+    public void checkMine() {
+        if (!specialsAllowed || !BasicBotAI.BroodWar.self().hasResearched(TechType.Spider_Mines)) {
+            return;
+        }
+
+        if (spiderMineCount != unit.getSpiderMineCount()) {
+            spiderMineCount = unit.getSpiderMineCount();
+            specialPosition = Position.None;
+        }
+
+        if (spiderMineCount > 0 && !specialPosition.isValid(BasicBotAI.BroodWar)) {
+            specialPosition = MicroUtil.getMinePosition();
+            if (specialPosition.isValid(BasicBotAI.BroodWar)) {
+                int dt = 64 + (BotUtil.dist(unit.getPosition(), specialPosition) / 3);
+                specialQueue = BasicBotAI.BroodWar.getFrameCount() + dt;
+            }
+        }
+
+        if (specialPosition.isValid(BasicBotAI.BroodWar)) {
+            if (BotUtil.sqDist(position, specialPosition) <= 1024 && attackQueue == 0) {
+                unit.useTech(TechType.Spider_Mines, specialPosition);
+                attackQueue = 16;
+            }
+            if (BasicBotAI.BroodWar.getFrameCount() > specialQueue) {
+                specialPosition = Position.None;
+            }
+        }
+    }
+
+    public void setSpecialPosition(Position pos) {
+        specialPosition = pos;
+        destinPosition = (!BotUtil.isNone(pos)) ? pos : attackPosition;
+    }
+
+    public void forceUnsiege() {
+        specialQueue = 0;
+        if (unit.isSieged()) {
+            unit.unsiege();
+            BasicBotAI.BroodWar.printf(position + " LEAVE");
+        }
+    }
+
+    public boolean checkSneakiness() {
+        return (StateManager.getInstance().strategy == 4);
+    }
 
     // ------- T A R G E T I N G ------- //
 
@@ -254,7 +408,5 @@ public class Fighter {
 
         return u;
     }
-
-
 
 }

@@ -12,3 +12,4 @@
 2021-12-18
 - update enemyManager (using MapUtil, MapInfluence)
 - create Threat, ThreatManager
+- update Fighter actions
