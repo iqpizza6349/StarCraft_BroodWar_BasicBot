@@ -1,9 +1,14 @@
 2021-12-08:
 - analyze Map
 - draw Map
+
 2021-12-17:
 - utility (such as unit, enemy, map...)
 - config
 - state
 - file read and write
 - deep learning
+
+2021-12-18
+- update enemyManager (using MapUtil, MapInfluence)
+- create Threat, ThreatManager

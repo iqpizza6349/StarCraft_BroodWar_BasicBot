@@ -146,7 +146,6 @@ public class EnemyManager {
         Position p = unit.getPosition();
 
         if (t.supplyRequired() > 0) {
-            // TODO: 2021-12-08  changeSupply(t, t.supplyRequired());
             changeSupply(t, t.supplyRequired());
             checkTechUnit(t);
             appendUnitInfo(unit);
@@ -159,7 +158,7 @@ public class EnemyManager {
                 determineMain(unit);
             }
             if (!unit.isLifted()) {
-                // TODO setMapArea();
+                MapUtil.setMapArea(BasicMap.buildMap_Var, unit, false);
             }
             checkTech(t, +1);
             checkDefense(unit, +1);
@@ -177,7 +176,9 @@ public class EnemyManager {
         }
         if (t.isBuilding()) {
             positions.remove(unit.getPosition());
-            // TODO
+            if (!unit.isLifted()) {
+                MapUtil.clearBuildArea(BasicMap.buildMap_Var, BasicMap.buildMap_Fix, unit);
+            }
             checkTech(t, -1);
             checkDefense(unit, -1);
         }
@@ -207,7 +208,7 @@ public class EnemyManager {
                 checkDefense(unit, +1);
                 if (!positions.contains(p)) {
                     positions.add(p);
-                    // TODO
+                    MapUtil.setMapArea(BasicMap.buildMap_Var, unit, false);
                 }
                 return;
             }
@@ -218,7 +219,7 @@ public class EnemyManager {
                 checkTimeLair(unit, true);
                 if (!positions.contains(p)) {
                     positions.add(p);
-                    // TODO
+                    MapUtil.setMapArea(BasicMap.buildMap_Var, unit, false);
                 }
                 return;
             }
@@ -226,7 +227,7 @@ public class EnemyManager {
             if (true) {
                 checkTech(t, +1);
                 positions.add(p);
-                // TOOD AREA
+                MapUtil.setMapArea(BasicMap.buildMap_Var, unit, false);
                 supply_work = BotUtil.safeSum(supply_work, -2);
                 return;
             }
@@ -320,7 +321,10 @@ public class EnemyManager {
                     BasicMap.enemyStart = BasicMap.mainTiles[i];
                     BasicMap.enemyMain = BasicMap.mainPos[i];
                     BasicMap.enemyNatural = BasicMap.naturalPos[i];
-//                    BasicMap.entranceCircleIncrement = get_direction_8 TODO
+                    BasicMap.entranceCircleIncrement = MapUtil.getDirection8(
+                            BasicMap.mainPos[i],
+                            new Position(BasicMap.mainChokePos[i].x * 3, BasicMap.mainChokePos[i].y * 3)
+                    );
                 }
                 if (BasicBotAI.BroodWar.enemies().size() >= 2 || main_pos.isEmpty()) {
                     main_pos.add(unit.getPosition());
@@ -372,14 +376,15 @@ public class EnemyManager {
             return;
         }
         if (p.x % 32 == 0 && p.y % 32 == 16) {
-            // TODO clearBuildArea();
+            MapUtil.clearBuildArea(BasicMap.buildMap_Var, BasicMap.buildMap_Fix, p.x / 32 - 2, p.y / 32 - 1, 4, 3);
             return;
         }
         if (p.x % 32 == 16 && p.y % 32 == 0) {
+            MapUtil.clearBuildArea(BasicMap.buildMap_Var, BasicMap.buildMap_Fix, p.x / 32 - 1, p.y / 32 - 1, 3, 2);
             return;
         }
         if (p.x % 32 == 0 && p.y % 32 == 0) {
-            return;
+            MapUtil.clearBuildArea(BasicMap.buildMap_Var, BasicMap.buildMap_Fix, p.x / 32 - 1, p.y / 32 - 1, 2, 2);
         }
     }
 
@@ -400,14 +405,15 @@ public class EnemyManager {
 
         if (u.isCompleted()) {
             if (isGrid && p.isValid(BasicBotAI.BroodWar)) {
-                // TODO set_influence
+                MapInfluence.setInfluence(ThreatManager.groundDef, p.x, p.y, size, dz);
                 grddef_count = BotUtil.safeSum(grddef_count, dz);
             }
             if (isAir && p.isValid(BasicBotAI.BroodWar)) {
+                MapInfluence.setInfluence(ThreatManager.airDef, p.x, p.y, size, dz);
                 airdef_count = BotUtil.safeSum(airdef_count, dz);
             }
             if (isDet && p.isValid(BasicBotAI.BroodWar)) {
-
+                MapInfluence.setInfluence(ThreatManager.staDet, p.x, p.y, size, dz);
             }
         }
         else {
