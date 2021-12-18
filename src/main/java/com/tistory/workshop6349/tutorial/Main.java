@@ -1,13 +1,11 @@
 package com.tistory.workshop6349.tutorial;
 
 import bwapi.*;
-import bwem.BWEM;
 
 public class Main implements BWEventListener {
 
     public BWClient client;
     public static Game game;
-    public static BWEM bwem;
     public static TutorialBot bot;
 
     public static void main(String[] args) {
