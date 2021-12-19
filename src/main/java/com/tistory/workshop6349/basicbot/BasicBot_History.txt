@@ -13,3 +13,6 @@
 - update enemyManager (using MapUtil, MapInfluence)
 - create Threat, ThreatManager
 - update Fighter actions
+
+2021-12-19
+- Grouper
