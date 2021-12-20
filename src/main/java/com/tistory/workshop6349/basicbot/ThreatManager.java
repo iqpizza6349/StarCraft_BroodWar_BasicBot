@@ -88,6 +88,15 @@ public class ThreatManager {
 
     public static boolean debug;
 
+    public static int getGroundDef(Position p) {
+        return groundDef[p.y / 8][p.x / 8];
+    }
+
+    public static int getAirDef(Position p) {
+        return airDef[p.y / 8][p.x / 8];
+    }
+
+
     public ThreatManager() {
         MapUtil.fillMapInt(groundDef, 0);
         MapUtil.fillMapInt(airDef, 0);
@@ -196,7 +205,7 @@ public class ThreatManager {
         for (Threat t : v) {
             if (u.getID() == t.id) {
                 t.clear();
-                t = v.remove(v.indexOf(t));
+                v.remove(t);
             }
         }
     }
@@ -215,7 +224,7 @@ public class ThreatManager {
                 }
                 else {
                     t.clear();
-                    t = v.remove(v.indexOf(t));
+                    v.remove(t);
                 }
             }
         }
@@ -225,7 +234,7 @@ public class ThreatManager {
         for (Threat t : v) {
             if (BasicBotAI.BroodWar.getFrameCount() > t.ef) {
                 t.clear();
-                t = v.remove(v.indexOf(t));
+                v.remove(t);
             }
         }
     }
