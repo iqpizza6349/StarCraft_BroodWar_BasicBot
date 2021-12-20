@@ -20,3 +20,5 @@
 
 2021-12-20
 - DropManager
+- SCV
+- Repair
