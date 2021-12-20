@@ -22,3 +22,5 @@
 - DropManager
 - SCV
 - Repair
+- BaseFinder
+- Expo
