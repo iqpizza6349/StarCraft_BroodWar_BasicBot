@@ -30,6 +30,7 @@
 - SCV
 - BasicBuild
 - BasicUnits
+- TargetFinder
 
 
 
