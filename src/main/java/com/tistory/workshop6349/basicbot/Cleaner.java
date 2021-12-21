@@ -1,6 +1,7 @@
 package com.tistory.workshop6349.basicbot;
 
 import bwapi.Position;
+import bwapi.TilePosition;
 import bwapi.Unit;
 
 import java.util.ArrayList;
@@ -36,11 +37,22 @@ public class Cleaner {
     }
 
     public static void resetPlannedBuilds() {
-        // TODO Builds
+        if (BasicBuild.plannedBuildings.size() == 0) {
+            BasicBuild.plannedBuildQueue = 0;
+        }
+        else {
+            ++BasicBuild.plannedBuildQueue;
+        }
+
+        if (BasicBuild.plannedBuildQueue >= 8) {
+            BasicBuild.plannedBuildQueue = 0;
+            BasicBuild.plannedBuildings.clear();
+        }
     }
 
     public static void resetBlockedTiles() {
-        // TODO Builds
+        BasicBuild.blockedTile = TilePosition.None;
+        BasicBuild.scannedBlockedTile = false;
     }
 
     public static void correctAllMinerals() {
@@ -90,7 +102,17 @@ public class Cleaner {
             Position pc = BasicMap.mainChokePos[BasicMap.mm];
             Position pd = BasicMap.mainDefPos[BasicMap.mm];
 
-            // TODO Build
+            for (Unit u : BasicBuild.bunkers) {
+                if (BotUtil.sqDist(u.getPosition(), pc) <= 65536 && BotUtil.sqDist(u.getPosition(), pd) <= 65536) {
+                    EnemyManager.getInstance().tlself.add(u);
+                }
+            }
+            for (Unit u : BasicBuild.turrets) {
+                if (BotUtil.sqDist(u.getPosition(), pc) <= 65536 && BotUtil.sqDist(u.getPosition(), pd) <= 65536) {
+                    EnemyManager.getInstance().tlself.add(u);
+                }
+            }
+
         }
     }
 
