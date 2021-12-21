@@ -52,7 +52,10 @@ public class SCV {
     private int stuckQueue;
     private int minTargetDistance;
 
-
+    public SCV(Unit unit) {
+        this.unit = unit;
+        // TODO ...
+    }
 
 
 
